@@ -55,19 +55,58 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
-    // A dummy search result: it just picks the first possible neighbour
-    var result : SearchResult<Node> = {
-        path: [start],
-        cost: 0
-    };
-    while (result.path.length < 3) {
-        var edge : Edge<Node> = graph.outgoingEdges(start) [0];
-        if (! edge) break;
-        start = edge.to;
-        result.path.push(start);
-        result.cost += edge.cost;
+    var visitedNodes = new Collections.Set<Node>();
+    var pendingNodes = new Collections.Set<Node>();
+    var cameFrom: {[key:Node]: Node} = {};
+
+    var cost: {[key:Node]: number} = {};
+    cost[start] = 0;
+
+    var fScore: {[key:Node]: number} = {};
+    fScore[start] = heuristics(start);
+
+    while(!pendingNodes.empty()) {
+        var currentNode = pendingNodes[0]; //If pendingNodes is a priority queue
+        if(goal(currentNode)) {
+            var result = SearchResult<Node> = {
+                path: constructPath(cameFrom, currentNode),
+                cost = fScore[currentNode];
+            }
+            return result;
+        }
+        pendingNodes.remove(currentNode);
+        visitedNodes.add(currentNode);
+
+        for(var neighbour in getNeighbours(graph, currentNode)) {
+            if(neighbour in visitedNodes) {
+                continue;
+            }
+            tentativeCost = cost[currentNode] + distance(currentNode, neighbour);
+            if(!pendingNodes.contains(currentNode)) {
+                pendingNodes.add(currentNode);
+            } else if (tentativeCost >= cost[neighbour]) {
+                continue;
+            }
+
+            cameFrom[neighbour] = currentNode;
+            cost[neighbour] = tentativeCost;
+            fScore[neighbour] = tentativeCost + heuristics(neighbour);
+        }
+        // TODO: Check timeout
     }
-    return result;
+    return null; //What should we return?
 }
 
+function constructPath(
+    cameFrom : {[key:Node]: Node},
+    endNode: Node
+) : Node[] {
+    var currentNode = endNode;
+    var path = [endNode];
+    while(cameFrom[currentNode]!=null) {
+        currentNode = cameFrom[currentNode];
+        path.addFirst(currentNode);
+    }
+    return path;
+}
 
