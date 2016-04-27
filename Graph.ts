@@ -55,58 +55,74 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    var cost = new collections.Dictionary<Node, number>();
+    cost.setValue(start, 0);
+
+    var fScore = new collections.Dictionary<Node, number>();
+    fScore.setValue(start, heuristics(start));
+
     var visitedNodes = new collections.Set<Node>();
-    var pendingNodes = new collections.Set<Node>();
-    var cameFrom: {[key:Node]: Node} = {};
+    var pendingNodes = new collections.PriorityQueue<Node>((a: Node, b: Node) =>
+                                                   {
+                                                       return cost.getValue(a) - cost.getValue(b);
+                                                   }
+                                                  );
+    pendingNodes.enqueue(start);
+    var cameFrom = new collections.Dictionary<Node, Node>();
 
-    var cost: {[key:Node]: number} = {};
-    cost[start] = 0;
-
-    var fScore: {[key:Node]: number} = {};
-    fScore[start] = heuristics(start);
-
-    while(!pendingNodes.empty()) {
-        var currentNode = pendingNodes[0]; //If pendingNodes is a priority queue
+    while(!pendingNodes.isEmpty()) {
+        var currentNode = pendingNodes.dequeue();
         if(goal(currentNode)) {
             var result: SearchResult<Node> = {
-                path: constructPath(cameFrom, currentNode),
-                cost = fScore[currentNode]
+                path: constructPath(currentNode),
+                cost: fScore.getValue(currentNode)
             }
             return result;
         }
-        pendingNodes.remove(currentNode);
         visitedNodes.add(currentNode);
 
-        for(var neighbour in getNeighbours(graph, currentNode)) {
-            if(neighbour in visitedNodes) {
+        for(var neighbour of getNeighbours(currentNode)) {
+            if (visitedNodes.contains(neighbour)) {
                 continue;
             }
-            tentativeCost = cost[currentNode] + distance(currentNode, neighbour);
+            var tentativeCost = cost.getValue(currentNode) + distance(currentNode, neighbour);
             if(!pendingNodes.contains(currentNode)) {
                 pendingNodes.add(currentNode);
-            } else if (tentativeCost >= cost[neighbour]) {
+            } else if (tentativeCost >= cost.getValue(neighbour)) {
                 continue;
             }
 
-            cameFrom[neighbour] = currentNode;
-            cost[neighbour] = tentativeCost;
-            fScore[neighbour] = tentativeCost + heuristics(neighbour);
+            cameFrom.setValue(neighbour, currentNode);
+            cost.setValue(neighbour, tentativeCost);
+            fScore.setValue(neighbour, tentativeCost + heuristics(neighbour));
         }
         // TODO: Check timeout
     }
     return null; //What should we return?
-}
 
-function constructPath(
-    cameFrom : {[key:Node]: Node},
-    endNode: Node
-) : Node[] {
-    var currentNode = endNode;
-    var path = [endNode];
-    while(cameFrom[currentNode]!=null) {
-        currentNode = cameFrom[currentNode];
-        path.push(currentNode);
+    function getNeighbours(home: Node) : Node[] {
+        var neighbours : Node[] = [];
+        for (var edge of graph.outgoingEdges(home)) {
+            neighbours.push(edge.to)
+        }
+        return neighbours;
     }
-    return path;
-}
 
+    function distance(node: Node, next: Node) : number {
+        for (var edge of graph.outgoingEdges(node)) {
+            if (graph.compareNodes(next, edge.to) == 0)
+                return edge.cost;
+        }
+        return;
+    }
+
+    function constructPath(endNode: Node) : Node[] {
+        var currentNode = endNode;
+        var path = [endNode];
+        while(cameFrom.getValue(currentNode)!=undefined) {
+            currentNode = cameFrom.getValue(currentNode);
+            path.push(currentNode);
+        }
+        return path;
+    }
+}
