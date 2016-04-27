@@ -55,8 +55,8 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
-    var visitedNodes = new Collections.Set<Node>();
-    var pendingNodes = new Collections.Set<Node>();
+    var visitedNodes = new collections.Set<Node>();
+    var pendingNodes = new collections.Set<Node>();
     var cameFrom: {[key:Node]: Node} = {};
 
     var cost: {[key:Node]: number} = {};
@@ -68,9 +68,9 @@ function aStarSearch<Node> (
     while(!pendingNodes.empty()) {
         var currentNode = pendingNodes[0]; //If pendingNodes is a priority queue
         if(goal(currentNode)) {
-            var result = SearchResult<Node> = {
+            var result: SearchResult<Node> = {
                 path: constructPath(cameFrom, currentNode),
-                cost = fScore[currentNode];
+                cost = fScore[currentNode]
             }
             return result;
         }
@@ -105,7 +105,7 @@ function constructPath(
     var path = [endNode];
     while(cameFrom[currentNode]!=null) {
         currentNode = cameFrom[currentNode];
-        path.addFirst(currentNode);
+        path.push(currentNode);
     }
     return path;
 }
