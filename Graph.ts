@@ -86,8 +86,8 @@ function aStarSearch<Node> (
                 continue;
             }
             var tentativeCost = cost.getValue(currentNode) + distance(currentNode, neighbour);
-            if(!pendingNodes.contains(currentNode)) {
-                pendingNodes.add(currentNode);
+            if(!pendingNodes.contains(neighbour)) {
+                pendingNodes.add(neighbour);
             } else if (tentativeCost >= cost.getValue(neighbour)) {
                 continue;
             }
