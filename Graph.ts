@@ -66,7 +66,7 @@ function aStarSearch<Node> (
     var visitedNodes = new collections.Set<Node>();
     var pendingNodes = new collections.PriorityQueue<Node>((a: Node, b: Node) =>
                                                    {
-                                                       return cost.getValue(a) - cost.getValue(b);
+                                                       return fScore.getValue(b) - fScore.getValue(a);
                                                    }
                                                   );
     pendingNodes.enqueue(start);
@@ -92,6 +92,7 @@ function aStarSearch<Node> (
                 continue;
             }
             var tentativeCost = cost.getValue(currentNode) + distance(currentNode, neighbour);
+            //console.log(neighbour + " " + tentativeCost)
             if(!pendingNodes.contains(neighbour)) {
                 pendingNodes.add(neighbour);
             } else if (tentativeCost >= cost.getValue(neighbour)) {
@@ -103,7 +104,7 @@ function aStarSearch<Node> (
             fScore.setValue(neighbour, tentativeCost + heuristics(neighbour));
         }
     }
-    return undefined; //TODO: What should we return?
+    return;
 
     function getNeighbours(home: Node) : Node[] {
         var neighbours : Node[] = [];
