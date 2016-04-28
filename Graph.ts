@@ -126,7 +126,7 @@ function aStarSearch<Node> (
         var path = [endNode];
         while(cameFrom.getValue(currentNode)!=undefined) {
             currentNode = cameFrom.getValue(currentNode);
-            path.push(currentNode);
+            path.unshift(currentNode);
         }
         return path;
     }
