@@ -55,6 +55,8 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    timeout = timeout * 1000;
+    var startTime = new Date().getTime();
     var cost = new collections.Dictionary<Node, number>();
     cost.setValue(start, 0);
 
@@ -71,6 +73,10 @@ function aStarSearch<Node> (
     var cameFrom = new collections.Dictionary<Node, Node>();
 
     while(!pendingNodes.isEmpty()) {
+        // Check timeout
+        if(new Date().getTime() - startTime > timeout) {
+            break;
+        }
         var currentNode = pendingNodes.dequeue();
         if(goal(currentNode)) {
             var result: SearchResult<Node> = {
@@ -96,9 +102,8 @@ function aStarSearch<Node> (
             cost.setValue(neighbour, tentativeCost);
             fScore.setValue(neighbour, tentativeCost + heuristics(neighbour));
         }
-        // TODO: Check timeout
     }
-    return null; //What should we return?
+    return undefined; //TODO: What should we return?
 
     function getNeighbours(home: Node) : Node[] {
         var neighbours : Node[] = [];
