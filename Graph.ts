@@ -65,10 +65,8 @@ function aStarSearch<Node> (
 
     var visitedNodes = new collections.Set<Node>();
     var pendingNodes = new collections.PriorityQueue<Node>((a: Node, b: Node) =>
-                                                   {
-                                                       return fScore.getValue(b) - fScore.getValue(a);
-                                                   }
-                                                  );
+                                           { return fScore.getValue(b) - fScore.getValue(a); }
+                                          );
     pendingNodes.enqueue(start);
     var cameFrom = new collections.Dictionary<Node, Node>();
 
@@ -116,8 +114,9 @@ function aStarSearch<Node> (
 
     function distance(node: Node, next: Node) : number {
         for (var edge of graph.outgoingEdges(node)) {
-            if (graph.compareNodes(next, edge.to) == 0)
+            if (graph.compareNodes(next, edge.to) == 0) {
                 return edge.cost;
+            }
         }
         return;
     }
