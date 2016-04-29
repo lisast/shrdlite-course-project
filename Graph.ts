@@ -92,9 +92,9 @@ function aStarSearch<Node> (
                 continue;
             }
             var tentativeCost = cost.getValue(currentNode) + distance(currentNode, neighbour);
-            //console.log(neighbour + " " + tentativeCost)
             if(!pendingNodes.contains(neighbour)) {
-                pendingNodes.add(neighbour);
+                fScore.setValue(neighbour, tentativeCost + heuristics(neighbour));
+                pendingNodes.enqueue(neighbour);
             } else if (tentativeCost >= cost.getValue(neighbour)) {
                 continue;
             }
