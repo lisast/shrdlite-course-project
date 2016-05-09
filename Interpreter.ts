@@ -125,5 +125,15 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         return objects.contains(object);
     }
+
+    /**
+    * Resturns a key to a (first) object that matches the given object.
+    */
+    function findObjectId(object : Parser.Object, state : WorldState) : string {
+        // All objects in the world
+        for(var key in state.objects) {
+            
+        }
+    }
 }
 
