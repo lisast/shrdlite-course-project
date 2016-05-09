@@ -117,5 +117,13 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return interpretation;
     }
 
+    /**
+    * Checks if a given object is in the state
+    */
+    function isInStack(object : string, state : WorldState) : bool {
+        // All objects in stacks
+        var objects : string[] = Array.prototype.concat.apply([], state.stacks);
+        return objects.contains(object);
+    }
 }
 
