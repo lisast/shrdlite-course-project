@@ -110,10 +110,31 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
-        var interpretation : DNFFormula = [[
-            {polarity: true, relation: "ontop", args: [a, "floor"]},
-            {polarity: true, relation: "holding", args: [b]}
-        ]];
+        var interpretation : DNFFormula = [];
+        if (cmd.command == "take") {
+            var ids = findObjectId(cmd.entity.object, state)
+            ids.forEach((id : string) => {
+                if (isInStack(id, state)) {
+                    interpretation.push([
+                        {polarity: true, relation: "holding", args: [id]}
+                    ])
+                }
+            })
+        } else {
+            console.log(cmd)
+            var ids = findObjectId(cmd.entity.object, state)
+            ids.forEach((id : string) => {
+                if (isInStack(id, state)) {
+                    interpretation.push([
+                        {polarity: true, relation: cmd.location.relation, args: [id]}
+                    ])
+                }
+            })
+            //interpretation = [[
+                //{polarity: true, relation: "ontop", args: [a, "floor"]},
+                //{polarity: true, relation: "holding", args: [b]}
+            //]];
+        }
         return interpretation;
     }
 
@@ -123,24 +144,26 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     function isInStack(object : string, state : WorldState) : Boolean {
         // All objects in stacks
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        return objects.hasOwnProperty(object);
+        return objects.indexOf(object) > -1;
     }
 
     /**
     * Resturns a key to a (first) object that matches the given object.
     */
-    function findObjectId(object : Parser.Object, state : WorldState) : string {
+    function findObjectId(object : Parser.Object, state : WorldState) : string[] {
         // All objects in the world
+        var ids : string[] = []
         for(var key in state.objects) {
             var colorCheck = !object.color ? true : object.color == state.objects[key].color
-            var formCheck = !object.form ? true : object.form == state.objects[key].form
+            var formCheck = !object.form  || object.form == "anyform" ?
+                true : object.form == state.objects[key].form
             var sizeCheck = !object.size ? true : object.size == state.objects[key].size
 
             if (colorCheck && formCheck && sizeCheck) {
-                return key
+                ids.push(key)
             }
         }
-        return null
+        return ids
     }
 }
 
