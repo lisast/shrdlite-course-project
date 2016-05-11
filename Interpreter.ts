@@ -111,7 +111,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
         var interpretation : DNFFormula = [];
+        console.log(cmd.entity);
+        console.log(isEntity(cmd.entity));
         if (cmd.command == "take") {
+            //console.log(cmd)
+            //console.log(cmd.entity.object.object)
             var ids = findObjectId(cmd.entity.object)
             ids.forEach((id : string) => {
                 if (isInStack(id)) {
@@ -138,16 +142,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                     })
                 }
             })
-            //interpretation = [[
-                //{polarity: true, relation: "ontop", args: [a, "floor"]},
-                //{polarity: true, relation: "holding", args: [b]}
-            //]];
         }
-        //interpretation = interpretation == [] ? undefined : interpretation
-        if (!interpretation.length) {
-            return null
-        }
-        return interpretation;
+        return !interpretation.length ? null : interpretation
 
         /**
          * This function checks if the physical laws are not violated by a literal
@@ -212,6 +208,69 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
             }
             return ids
+        }
+
+        function isEntity (entity: Parser.Entity) : Boolean {
+            //checks if the entity has a valid location and if the entitys object is valid
+            if(entity.object.location) {
+               return existLocation(entity.object.location, entity.object) &&
+                       findObjectId(entity.object).length> -1;
+
+            //if there is no location the object only has to exits
+            } else {
+                return findObjectId(entity.object).length > -1;
+            }
+        }
+
+        function existLocation (location : Parser.Location,  parent : Parser.Object) : Boolean {
+            //checks if the relation is okey by checking of the locations entity is valid to the parent.
+            if(isValidRelation(location.relation,
+                            isEntity(location.entity) ? location.entity.object : null,
+                            parent)){
+               return true;
+           }
+           return false;
+        }
+
+        function isValidRelation(relation : string, child : Parser.Object, parent : Parser.Object) {
+            //First action when finding location
+            if(!parent) {
+                return true;
+
+            //if there is no child, return false
+            } else if (!child) {
+                return false;
+
+            //check if the relation between the parent and the child
+            } else {
+                var c : string[] = findObjectId(child);
+                var p : string[] = findObjectId(parent);
+
+                if(relation == "leftof") {
+                    var stackNum = [];
+                    c.forEach((kidd : string) => {
+                        for(var i=0; i<state.stacks.length; i++) {
+                            if(state.stacks[i].indexOf(kidd) > -1)
+                                stackNum.push(i);
+                        }
+                    })
+                    p.forEach((par : string) => {
+                        for(var i=0; i<stackNum.length; i++) {
+                            if(state.stacks[stackNum[i]-1].indexOf(par) > -1) {
+                                return true;
+                            }
+                        }
+                    })
+
+                } else if(relation == "beside") {
+
+                } else if(relation == "above") {
+
+                } else if(relation == "ontop" || relation == "inside") {
+
+                }
+            }
+            return false;
         }
     }
 }
