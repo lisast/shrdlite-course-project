@@ -122,12 +122,20 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             })
         } else {
             console.log(cmd)
-            var ids = findObjectId(cmd.entity.object)
-            ids.forEach((id : string) => {
-                if (isInStack(id)) {
-                    interpretation.push([
-                        {polarity: true, relation: cmd.location.relation, args: [id]}
-                    ])
+            var ids_a = findObjectId(cmd.entity.object)
+            var ids_b = findObjectId(cmd.location.entity.object)
+            ids_a.forEach((id_a : string) => {
+                if (isInStack(id_a)) {
+                    ids_b.forEach((id_b : string) => {
+                        var lit : Literal = {
+                            polarity: true,
+                            relation: cmd.location.relation,
+                            args: [id_a, id_b]
+                        }
+                        if (isValidLiteral(lit)) {
+                            interpretation.push([ lit ])
+                        }
+                    })
                 }
             })
             //interpretation = [[
@@ -141,18 +149,33 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
          * This function checks if the physical laws are not violated by a literal
          */
         function isValidLiteral(literal : Literal) : Boolean {
-            if (literal.relation == "holding" || literal.relation == "leftof") {
-                return true
+            var a = state.objects[literal.args[0]]
+            var b = state.objects[literal.args[1]]
+            if (a == b) {
+                return false
             }
-            var a = literal.args[0]
-            var b = literal.args[1]
             if (literal.relation == "inside" || literal.relation == "ontop") {
                 // Small objects cannot support large objects
-                if (state.objects[a].size == "large" && state.objects[b].size == "small") {
-                    return false
-                }
+                var cond1 = a.size == "large" && b.size == "small"
                 // Balls cannot support anything
-                else if (state.objects[b].form == "ball") {
+                var cond2 = b.form == "ball"
+                // balls can not reside on table
+                var cond3 = a.form == "ball" && b.form == "table"
+                // boxes can't contain pyriamids, planks, boxes of the same size
+                var cond4 = b.form == "box" && b.size == a.size && (
+                        a.form == "pyramid" ||
+                        a.form == "plank" ||
+                        a.form == "box")
+                // small boxes can not be supported by small bricks or pyramids
+                var cond5 = a.form == "box" && a.size == "small" && (
+                        b.form == "pyramid" ||
+                        (b.form == "brick" && b.size == "small"))
+                // large boxes cant be supported by large pyramids
+                var cond6 = a.form == "box" && a.size == "large" && (
+                        b.form == "pyramid" && b.size == "large")
+
+                if (cond1 || cond2 || cond3 ||
+                    cond4 || cond5 || cond6) {
                     return false;
                 }
             }
