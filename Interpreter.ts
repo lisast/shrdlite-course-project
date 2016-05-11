@@ -143,6 +143,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 //{polarity: true, relation: "holding", args: [b]}
             //]];
         }
+        //interpretation = interpretation == [] ? undefined : interpretation
+        if (!interpretation.length) {
+            return null
+        }
         return interpretation;
 
         /**
