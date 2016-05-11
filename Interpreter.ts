@@ -112,9 +112,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var b : string = objects[Math.floor(Math.random() * objects.length)];
         var interpretation : DNFFormula = [];
         if (cmd.command == "take") {
-            var ids = findObjectId(cmd.entity.object, state)
+            var ids = findObjectId(cmd.entity.object)
             ids.forEach((id : string) => {
-                if (isInStack(id, state)) {
+                if (isInStack(id)) {
                     interpretation.push([
                         {polarity: true, relation: "holding", args: [id]}
                     ])
@@ -122,9 +122,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             })
         } else {
             console.log(cmd)
-            var ids = findObjectId(cmd.entity.object, state)
+            var ids = findObjectId(cmd.entity.object)
             ids.forEach((id : string) => {
-                if (isInStack(id, state)) {
+                if (isInStack(id)) {
                     interpretation.push([
                         {polarity: true, relation: cmd.location.relation, args: [id]}
                     ])
@@ -136,34 +136,56 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             //]];
         }
         return interpretation;
-    }
 
-    /**
-    * Checks if a given object is in the state
-    */
-    function isInStack(object : string, state : WorldState) : Boolean {
-        // All objects in stacks
-        var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        return objects.indexOf(object) > -1;
-    }
-
-    /**
-    * Resturns a key to a (first) object that matches the given object.
-    */
-    function findObjectId(object : Parser.Object, state : WorldState) : string[] {
-        // All objects in the world
-        var ids : string[] = []
-        for(var key in state.objects) {
-            var colorCheck = !object.color ? true : object.color == state.objects[key].color
-            var formCheck = !object.form  || object.form == "anyform" ?
-                true : object.form == state.objects[key].form
-            var sizeCheck = !object.size ? true : object.size == state.objects[key].size
-
-            if (colorCheck && formCheck && sizeCheck) {
-                ids.push(key)
+        /**
+         * This function checks if the physical laws are not violated by a literal
+         */
+        function isValidLiteral(literal : Literal) : Boolean {
+            if (literal.relation == "holding" || literal.relation == "leftof") {
+                return true
             }
+            var a = literal.args[0]
+            var b = literal.args[1]
+            if (literal.relation == "inside" || literal.relation == "ontop") {
+                // Small objects cannot support large objects
+                if (state.objects[a].size == "large" && state.objects[b].size == "small") {
+                    return false
+                }
+                // Balls cannot support anything
+                else if (state.objects[b].form == "ball") {
+                    return false;
+                }
+            }
+            return true
         }
-        return ids
+
+        /**
+        * Checks if a given object is in the state
+        */
+        function isInStack(object : string) : Boolean {
+            // All objects in stacks
+            var objects : string[] = Array.prototype.concat.apply([], state.stacks);
+            return objects.indexOf(object) > -1;
+        }
+
+        /**
+        * Resturns a key to a (first) object that matches the given object.
+        */
+        function findObjectId(object : Parser.Object) : string[] {
+            // All objects in the world
+            var ids : string[] = []
+            for(var key in state.objects) {
+                var colorCheck = !object.color ? true : object.color == state.objects[key].color
+                var formCheck = !object.form  || object.form == "anyform" ?
+                    true : object.form == state.objects[key].form
+                var sizeCheck = !object.size ? true : object.size == state.objects[key].size
+
+                if (colorCheck && formCheck && sizeCheck) {
+                    ids.push(key)
+                }
+            }
+            return ids
+        }
     }
 }
 
