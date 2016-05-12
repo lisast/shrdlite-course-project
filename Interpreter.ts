@@ -247,7 +247,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 var p : string[] = findObjectId(parent);
 
                 if(relation == "leftof") {
-                    var stackNum = [];
+                    var stackNum : number[] = [];
                     c.forEach((kid : string) => {
                         for(var i=0; i<state.stacks.length; i++) {
                             if(state.stacks[i].indexOf(kid) > -1)
@@ -261,7 +261,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                             }
                         }
                     })
-
+                    return false;
                 } else if(relation == "beside") {
 
                 } else if(relation == "above") {
