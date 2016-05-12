@@ -209,21 +209,33 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
             return ids
         }
-
+		
+		/**
+		* Checks if the entirely is leagal or not.
+		* @param entity The entity to be checked.
+		*/
         function isEntity (entity: Parser.Entity) : Boolean {
-            //checks if the entity has a valid location and if the entitys object is valid
+            //If the entity has a location...
             if(entity.object.location) {
-               return existLocation(entity.object.location, entity.object) &&
+              //Check if the location is legit in relation to the entitys object and that the object exists in the world.
+			  //If this is true, return true otherwise false.
+			  return existLocation(entity.object.location, entity.object) &&
                        findObjectId(entity.object).length> -1;
 
-            //if there is no location the object only has to exist
+            //If there is no location the object only has to exist
             } else {
                 return findObjectId(entity.object).length > -1;
             }
         }
-
+		
+		/**
+		* Checks if the specified location is leagal.
+		* @param location The specified location to be checked
+		* @param parent Reference to the parent object that serves to a reference to check the location.
+		*/
         function existLocation (location : Parser.Location,  parent : Parser.Object) : Boolean {
-            //checks if the relation is valid by checking if the locations entity is valid to the parent.
+            //Checks if the locations relation is legit with the locations object in relation to the parent.
+			//If the locations entity is not legit, return false.
             if(isValidRelation(location.relation,
                             isEntity(location.entity) ? location.entity.object : null,
                             parent)){
@@ -231,13 +243,19 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
            }
            return false;
         }
-
+		
+		/**
+		*Checks the if a relation between two object is true or not. E.g. "The blue ball is beside the table." will return true if the ball is beside the table, otherwise false.
+		* @relation The relation to be checked. E.g. "beside", "leftof", "inside"
+		* @child The first object in e.g inside(x,y)
+		* @parent The second object in e.g inside(x,y)
+		*/
         function isValidRelation(relation : string, child : Parser.Object, parent : Parser.Object) : Boolean {
-            //First action when finding location
+            //First action when finding location should be true since the entity is checked separatly
             if(!parent) {
                 return true;
 
-            //if there is no child, return false
+            //if there is no child, return false. Illiagal location.
             } else if (!child) {
                 return false;
 
@@ -247,16 +265,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 var p : string[] = findObjectId(parent);
 
                 if(relation == "leftof") {
+					//Save each stack which a corresponging child is in.
                     var stackNum : number[] = [];
+					
+					//For each child, go through every stack to check if it is there and save it to the variable stackNum.
                     c.forEach((kid : string) => {
                         for(var i=0; i<state.stacks.length; i++) {
                             if(state.stacks[i].indexOf(kid) > -1)
                                 stackNum.push(i);
                         }
                     })
+					
+					//For each parent, go through each stack and check if there is a parent object in each of the stacks right of the stacks where the child is, since the "child is left of parent"
                     p.forEach((par : string) => {
                         for(var i=0; i<stackNum.length; i++) {
-                            if(state.stacks[stackNum[i]-1].indexOf(par) > -1) {
+                            if(state.stacks[stackNum[i]+1].indexOf(par) > -1) {
                                 return true;
                             }
                         }
