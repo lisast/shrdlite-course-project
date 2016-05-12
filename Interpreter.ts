@@ -136,7 +136,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                             relation: cmd.location.relation,
                             args: [id_a, id_b]
                         }
-                        if (isValidLiteral(lit)) {
+                        if (obeyesPhysicalLaws(lit)) {
                             interpretation.push([ lit ])
                         }
                     })
@@ -146,11 +146,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return !interpretation.length ? null : interpretation
 
         /**
-         * This function checks if the physical laws are not violated by a literal
+         * Checks if the physical laws are obeyed
          */
-        function isValidLiteral(literal : Literal) : Boolean {
+        function obeyesPhysicalLaws(literal : Literal) : Boolean {
             var a = state.objects[literal.args[0]]
             var b = state.objects[literal.args[1]]
+            // An object cannot have a relation with itself
             if (a == b) {
                 return false
             }
@@ -192,10 +193,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         }
 
         /**
-        * Resturns a key to a (first) object that matches the given object.
+        * Resturns a key to the (first) object that matches the given object.
         */
         function findObjectId(object : Parser.Object) : string[] {
-            // All objects in the world
             var ids : string[] = []
             for(var key in state.objects) {
                 var colorCheck = !object.color ? true : object.color == state.objects[key].color
@@ -216,14 +216,14 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                return existLocation(entity.object.location, entity.object) &&
                        findObjectId(entity.object).length> -1;
 
-            //if there is no location the object only has to exits
+            //if there is no location the object only has to exist
             } else {
                 return findObjectId(entity.object).length > -1;
             }
         }
 
         function existLocation (location : Parser.Location,  parent : Parser.Object) : Boolean {
-            //checks if the relation is okey by checking of the locations entity is valid to the parent.
+            //checks if the relation is valid by checking if the locations entity is valid to the parent.
             if(isValidRelation(location.relation,
                             isEntity(location.entity) ? location.entity.object : null,
                             parent)){
@@ -232,7 +232,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
            return false;
         }
 
-        function isValidRelation(relation : string, child : Parser.Object, parent : Parser.Object) {
+        function isValidRelation(relation : string, child : Parser.Object, parent : Parser.Object) : Boolean {
             //First action when finding location
             if(!parent) {
                 return true;
@@ -248,9 +248,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
                 if(relation == "leftof") {
                     var stackNum = [];
-                    c.forEach((kidd : string) => {
+                    c.forEach((kid : string) => {
                         for(var i=0; i<state.stacks.length; i++) {
-                            if(state.stacks[i].indexOf(kidd) > -1)
+                            if(state.stacks[i].indexOf(kid) > -1)
                                 stackNum.push(i);
                         }
                     })
