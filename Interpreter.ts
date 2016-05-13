@@ -111,53 +111,46 @@ module Interpreter {
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
         var interpretation : DNFFormula = [];
-        //console.log(cmd)
-        console.log("entity: ", getValidObjects(cmd.entity))
-        //console.log(cmd.entity)
-        //console.log(cmd.entity.object.location.entity)
+        var ids_a = getValidObjects(cmd.entity)
         switch (cmd.command) {
             case "take":
+                ids_a.forEach((id_a : string) => {
+                    interpretation.push([
+                        {polarity: true, relation: "holding", args: [id_a]}
+                    ])
+                })
                 break
             case "move":
-                console.log("location entity: ", getValidObjects(cmd.location.entity))
+                var ids_b = getValidObjects(cmd.location.entity)
+                ids_a.forEach((id_a : string) => {
+                    ids_b.forEach((id_b : string) => {
+                        var lit : Literal = {
+                            polarity: true,
+                            relation: cmd.location.relation,
+                            args: [id_a, id_b]
+                        }
+                        if (obeyesPhysicalLaws(lit)) {
+                            interpretation.push([ lit ])
+                        }
+                    })
+                })
                 break
         }
-        //if (cmd.command == "take") {
-            ////console.log(cmd)
-            ////console.log(cmd.entity.object.object)
-            //var ids = findObjectIds(cmd.entity.object)
-            //ids.forEach((id : string) => {
-                //if (isInStack(id)) {
-                    //interpretation.push([
-                        //{polarity: true, relation: "holding", args: [id]}
-                    //])
-                //}
-            //})
-        //} else {
-            //console.log(cmd)
-            //var ids_a = findObjectIds(cmd.entity.object)
-            //var ids_b = findObjectIds(cmd.location.entity.object)
-            //ids_a.forEach((id_a : string) => {
-                //if (isInStack(id_a)) {
-                    //ids_b.forEach((id_b : string) => {
-                        //var lit : Literal = {
-                            //polarity: true,
-                            //relation: cmd.location.relation,
-                            //args: [id_a, id_b]
-                        //}
-                        //if (oput the white ball in a box on the floorbeyesPhysicalLaws(lit)) {
-                            //interpretation.push([ lit ])
-                        //}
-                    //})
-                //}
-            //})
-        //}
-        return !interpretation.length ? null : interpretation
+
+        if (interpretation.length) {
+            return interpretation
+        } else {
+            throw new Error()
+        }
+        //return !interpretation.length ? null : interpretation
 
         /**
          * Checks if the physical laws are obeyed
          */
         function obeyesPhysicalLaws(literal : Literal) : Boolean {
+            if (literal.args[1] == "floor" && literal.relation == "ontop") {
+                return true
+            }
             var a = state.objects[literal.args[0]]
             var b = state.objects[literal.args[1]]
             // An object cannot have a relation with itself
@@ -174,20 +167,20 @@ module Interpreter {
                 // boxes can't contain pyriamids, planks, boxes of the same size
                 var cond4 = b.form == "box" && b.size == a.size && (
                     a.form == "pyramid" ||
-                        a.form == "plank" ||
-                        a.form == "box")
-                    // small boxes can not be supported by small bricks or pyramids
-                    var cond5 = a.form == "box" && a.size == "small" && (
-                        b.form == "pyramid" ||
-                            (b.form == "brick" && b.size == "small"))
-                        // large boxes cant be supported by large pyramids
-                        var cond6 = a.form == "box" && a.size == "large" && (
-                            b.form == "pyramid" && b.size == "large")
+                    a.form == "plank" ||
+                    a.form == "box")
+                // small boxes can not be supported by small bricks or pyramids
+                var cond5 = a.form == "box" && a.size == "small" && (
+                    b.form == "pyramid" ||
+                    (b.form == "brick" && b.size == "small"))
+                // large boxes cant be supported by large pyramids
+                var cond6 = a.form == "box" && a.size == "large" && (
+                    b.form == "pyramid" && b.size == "large")
 
-                            if (cond1 || cond2 || cond3 ||
-                                cond4 || cond5 || cond6) {
-                                return false;
-                            }
+                if (cond1 || cond2 || cond3 ||
+                    cond4 || cond5 || cond6) {
+                    return false
+                }
             }
             return true
         }
@@ -241,7 +234,6 @@ module Interpreter {
             //If the entity has a location object is complex
             if(entity.object.location) {
                 var objIds = findObjectIds(entity.object.object)
-                //console.log(objIds)
                 return pruneObjectsByLocation(entity.object.location, objIds)
             } else { // it's a simple object
                 var objsInStack : string[] = []
@@ -266,7 +258,6 @@ module Interpreter {
             var children : string[] = getValidObjects(location.entity)
             children.forEach((c : string) => {
                 parents.forEach((p : string) => {
-                    console.log(p, c, isValidRelation(location.relation, p, c))
                     if (isValidRelation(location.relation, p, c)) {
                         legalObjs.push(p)
                     }
@@ -309,12 +300,10 @@ module Interpreter {
                 case "ontop":
                 case "inside":
                     var i = getStack(parent)
-                    if (state.stacks[i].indexOf(parent) == state.stacks[i].indexOf(child) + 1) {
+                    if (state.stacks[i].indexOf(parent) == state.stacks[i].indexOf(child) + 1 &&
+                        (state.stacks[i].indexOf(child) != -1 || child == "floor")) {
                         return true
                     }
-                    break
-                default:
-                    console.log(relation)
                     break
             }
             return false
