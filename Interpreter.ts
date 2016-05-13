@@ -95,7 +95,7 @@ module Interpreter {
     //////////////////////////////////////////////////////////////////////
     // private functions
     /**
-     * The core interpretation function. 
+     * The core interpretation function.
      * @param cmd The actual command. Note that it is *not* a string, but rather an object of type `Command` (as it has been parsed by the parser).
      * @param state The current state of the world. Useful to look up objects in the world.
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
@@ -136,10 +136,10 @@ module Interpreter {
         } else {
             throw new Error()
         }
-        //return !interpretation.length ? null : interpretation
 
         /**
-         * Checks if the physical laws are obeyed
+         * Checks if the physical laws are obeyed by a literal
+         * @param literal the literal to check
          */
         function obeyesPhysicalLaws(literal : Literal) : Boolean {
             if (literal.args[1] == "floor" && literal.relation == "ontop") {
@@ -181,6 +181,7 @@ module Interpreter {
 
         /**
          * Checks if a given object is in the state
+         * @param object an object in key form
          */
         function isInStack(object : string) : Boolean {
             // All objects in stacks
@@ -190,6 +191,7 @@ module Interpreter {
 
         /**
         * Returns the stack that a given object is in.
+        * @param object an object in key form
         */
         function getStack(object : string) : number {
             var stacks = state.stacks
@@ -202,7 +204,8 @@ module Interpreter {
         }
 
         /**
-         * Returns a key to the (first) object that matches the given object.
+         * Returns all the keys of the objects that matches the given description
+         * @param object an object in parsed form
          */
         function findObjectIds(object : Parser.Object) : string[] {
             var ids : string[] = []
@@ -244,18 +247,16 @@ module Interpreter {
         }
 
         /**
-         * Checks if the specified location is legal.
+         * Removes all objects that do not fulfill the location requirements
          * @param location The specified location to be checked
-         * @param parent Reference to the parent object that serves to a reference to check the location.
+         * @param parents Reference to the parent objects that serves to a reference to check the location.
          */
         function pruneObjectsByLocation(location : Parser.Location,  parents : string[]) : string[] {
-            // Checks if the locations relation is legit with the locations object in relation to the parent.
-            // If the locations entity is not legit, return false.
             var legalObjs : string[] = []
             var children : string[] = getValidObjects(location.entity)
             children.forEach((c : string) => {
                 parents.forEach((p : string) => {
-                    if (isValidRelation(location.relation, p, c)) {
+                    if (hasRelation(location.relation, p, c)) {
                         legalObjs.push(p)
                     }
                 })
@@ -265,11 +266,11 @@ module Interpreter {
 
         /**
          * Checks the if a relation between two object is true or not. E.g. "The blue ball is beside the table." will return true if the ball is beside the table, otherwise false.
-         * @relation The relation to be checked. E.g. "beside", "leftof", "inside"
-         * @parent The second object in e.g inside(x,y)
-         * @child The first object in e.g inside(x,y)
+         * @param relation The relation to be checked. E.g. "beside", "leftof", "inside"
+         * @param parent The first object in e.g inside(x,y)
+         * @param child The second object in e.g inside(x,y)
          */
-        function isValidRelation(relation : string, parent : string, child : string) : Boolean {
+        function hasRelation(relation : string, parent : string, child : string) : Boolean {
             switch (relation) {
                 case "beside":
                     if (getStack(parent) - 1 == getStack(child) ||
