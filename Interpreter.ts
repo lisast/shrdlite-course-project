@@ -2,39 +2,39 @@
 ///<reference path="Parser.ts"/>
 
 /**
-* Interpreter module
-*
-* The goal of the Interpreter module is to interpret a sentence
-* written by the user in the context of the current world state. In
-* particular, it must figure out which objects in the world,
-* i.e. which elements in the `objects` field of WorldState, correspond
-* to the ones referred to in the sentence.
-*
-* Moreover, it has to derive what the intended goal state is and
-* return it as a logical formula described in terms of literals, where
-* each literal represents a relation among objects that should
-* hold. For example, assuming a world state where "a" is a ball and
-* "b" is a table, the command "put the ball on the table" can be
-* interpreted as the literal ontop(a,b). More complex goals can be
-* written using conjunctions and disjunctions of these literals.
-*
-* In general, the module can take a list of possible parses and return
-* a list of possible interpretations, but the code to handle this has
-* already been written for you. The only part you need to implement is
-* the core interpretation function, namely `interpretCommand`, which produces a
-* single interpretation for a single command.
-*/
+ * Interpreter module
+ *
+ * The goal of the Interpreter module is to interpret a sentence
+ * written by the user in the context of the current world state. In
+ * particular, it must figure out which objects in the world,
+ * i.e. which elements in the `objects` field of WorldState, correspond
+ * to the ones referred to in the sentence.
+ *
+ * Moreover, it has to derive what the intended goal state is and
+ * return it as a logical formula described in terms of literals, where
+ * each literal represents a relation among objects that should
+ * hold. For example, assuming a world state where "a" is a ball and
+ * "b" is a table, the command "put the ball on the table" can be
+ * interpreted as the literal ontop(a,b). More complex goals can be
+ * written using conjunctions and disjunctions of these literals.
+ *
+ * In general, the module can take a list of possible parses and return
+ * a list of possible interpretations, but the code to handle this has
+ * already been written for you. The only part you need to implement is
+ * the core interpretation function, namely `interpretCommand`, which produces a
+ * single interpretation for a single command.
+ */
 module Interpreter {
 
     //////////////////////////////////////////////////////////////////////
     // exported functions, classes and interfaces/types
 
-/**
-Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
-* @param parses List of parses produced by the Parser.
-* @param currentState The current state of the world.
-* @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/
+    /**
+      Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
+     * @param parses List of parses produced by the Parser.
+     * @param currentState The current state of the world.
+     * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
+     */
     export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
         var errors : Error[] = [];
         var interpretations : InterpretationResult[] = [];
@@ -63,21 +63,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     type Conjunction = Literal[];
 
     /**
-    * A Literal represents a relation that is intended to
-    * hold among some objects.
-    */
+     * A Literal represents a relation that is intended to
+     * hold among some objects.
+     */
     export interface Literal {
-	/** Whether this literal asserts the relation should hold
-	 * (true polarity) or not (false polarity). For example, we
-	 * can specify that "a" should *not* be on top of "b" by the
-	 * literal {polarity: false, relation: "ontop", args:
-	 * ["a","b"]}.
-	 */
+        /** Whether this literal asserts the relation should hold
+         * (true polarity) or not (false polarity). For example, we
+         * can specify that "a" should *not* be on top of "b" by the
+         * literal {polarity: false, relation: "ontop", args:
+         * ["a","b"]}.
+         */
         polarity : boolean;
-	/** The name of the relation in question. */
+        /** The name of the relation in question. */
         relation : string;
-	/** The arguments to the relation. Usually these will be either objects
-     * or special strings such as "floor" or "floor-N" (where N is a column) */
+        /** The arguments to the relation. Usually these will be either objects
+         * or special strings such as "floor" or "floor-N" (where N is a column) */
         args : string[];
     }
 
@@ -111,38 +111,47 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
         var interpretation : DNFFormula = [];
-        console.log(cmd.entity);
-        console.log(isEntity(cmd.entity));
-        if (cmd.command == "take") {
-            //console.log(cmd)
-            //console.log(cmd.entity.object.object)
-            var ids = findObjectId(cmd.entity.object)
-            ids.forEach((id : string) => {
-                if (isInStack(id)) {
-                    interpretation.push([
-                        {polarity: true, relation: "holding", args: [id]}
-                    ])
-                }
-            })
-        } else {
-            console.log(cmd)
-            var ids_a = findObjectId(cmd.entity.object)
-            var ids_b = findObjectId(cmd.location.entity.object)
-            ids_a.forEach((id_a : string) => {
-                if (isInStack(id_a)) {
-                    ids_b.forEach((id_b : string) => {
-                        var lit : Literal = {
-                            polarity: true,
-                            relation: cmd.location.relation,
-                            args: [id_a, id_b]
-                        }
-                        if (obeyesPhysicalLaws(lit)) {
-                            interpretation.push([ lit ])
-                        }
-                    })
-                }
-            })
+        //console.log(cmd)
+        console.log("entity: ", getValidObjects(cmd.entity))
+        //console.log(cmd.entity)
+        //console.log(cmd.entity.object.location.entity)
+        switch (cmd.command) {
+            case "take":
+                break
+            case "move":
+                console.log("location entity: ", getValidObjects(cmd.location.entity))
+                break
         }
+        //if (cmd.command == "take") {
+            ////console.log(cmd)
+            ////console.log(cmd.entity.object.object)
+            //var ids = findObjectIds(cmd.entity.object)
+            //ids.forEach((id : string) => {
+                //if (isInStack(id)) {
+                    //interpretation.push([
+                        //{polarity: true, relation: "holding", args: [id]}
+                    //])
+                //}
+            //})
+        //} else {
+            //console.log(cmd)
+            //var ids_a = findObjectIds(cmd.entity.object)
+            //var ids_b = findObjectIds(cmd.location.entity.object)
+            //ids_a.forEach((id_a : string) => {
+                //if (isInStack(id_a)) {
+                    //ids_b.forEach((id_b : string) => {
+                        //var lit : Literal = {
+                            //polarity: true,
+                            //relation: cmd.location.relation,
+                            //args: [id_a, id_b]
+                        //}
+                        //if (oput the white ball in a box on the floorbeyesPhysicalLaws(lit)) {
+                            //interpretation.push([ lit ])
+                        //}
+                    //})
+                //}
+            //})
+        //}
         return !interpretation.length ? null : interpretation
 
         /**
@@ -164,39 +173,53 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 var cond3 = a.form == "ball" && b.form == "table"
                 // boxes can't contain pyriamids, planks, boxes of the same size
                 var cond4 = b.form == "box" && b.size == a.size && (
-                        a.form == "pyramid" ||
+                    a.form == "pyramid" ||
                         a.form == "plank" ||
                         a.form == "box")
-                // small boxes can not be supported by small bricks or pyramids
-                var cond5 = a.form == "box" && a.size == "small" && (
+                    // small boxes can not be supported by small bricks or pyramids
+                    var cond5 = a.form == "box" && a.size == "small" && (
                         b.form == "pyramid" ||
-                        (b.form == "brick" && b.size == "small"))
-                // large boxes cant be supported by large pyramids
-                var cond6 = a.form == "box" && a.size == "large" && (
-                        b.form == "pyramid" && b.size == "large")
+                            (b.form == "brick" && b.size == "small"))
+                        // large boxes cant be supported by large pyramids
+                        var cond6 = a.form == "box" && a.size == "large" && (
+                            b.form == "pyramid" && b.size == "large")
 
-                if (cond1 || cond2 || cond3 ||
-                    cond4 || cond5 || cond6) {
-                    return false;
-                }
+                            if (cond1 || cond2 || cond3 ||
+                                cond4 || cond5 || cond6) {
+                                return false;
+                            }
             }
             return true
         }
 
         /**
-        * Checks if a given object is in the state
-        */
+         * Checks if a given object is in the state
+         */
         function isInStack(object : string) : Boolean {
             // All objects in stacks
             var objects : string[] = Array.prototype.concat.apply([], state.stacks);
             return objects.indexOf(object) > -1;
         }
 
+        function getStack(object : string) : number {
+            var stacks = state.stacks
+            for (var i = 0; i < stacks.length; i++) {
+                if (stacks[i].indexOf(object) > -1) {
+                    return i
+                }
+            }
+            return null
+        }
+
         /**
-        * Resturns a key to the (first) object that matches the given object.
-        */
-        function findObjectId(object : Parser.Object) : string[] {
+         * Resturns a key to the (first) object that matches the given object.
+         */
+        function findObjectIds(object : Parser.Object) : string[] {
             var ids : string[] = []
+            if (object.form == "floor") {
+                ids.push("floor")
+                return ids
+            }
             for(var key in state.objects) {
                 var colorCheck = !object.color ? true : object.color == state.objects[key].color
                 var formCheck = !object.form  || object.form == "anyform" ?
@@ -209,91 +232,92 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
             return ids
         }
-		
-		/**
-		* Checks if the entirely is leagal or not.
-		* @param entity The entity to be checked.
-		*/
-        function isEntity (entity: Parser.Entity) : Boolean {
-            //If the entity has a location...
+
+        /**
+         * Returns a set of valid objects given an entity
+         * @param entity The entity to be checked.
+         */
+        function getValidObjects(entity: Parser.Entity) : string[] {
+            //If the entity has a location object is complex
             if(entity.object.location) {
-              //Check if the location is legit in relation to the entitys object and that the object exists in the world.
-			  //If this is true, return true otherwise false.
-			  return existLocation(entity.object.location, entity.object) &&
-                       findObjectId(entity.object).length> -1;
-
-            //If there is no location the object only has to exist
-            } else {
-                return findObjectId(entity.object).length > -1;
+                var objIds = findObjectIds(entity.object.object)
+                //console.log(objIds)
+                return pruneObjectsByLocation(entity.object.location, objIds)
+            } else { // it's a simple object
+                var objsInStack : string[] = []
+                findObjectIds(entity.object).forEach((o : string) => {
+                    if (isInStack(o) || o == "floor") {
+                        objsInStack.push(o)
+                    }
+                })
+                return objsInStack
             }
         }
-		
-		/**
-		* Checks if the specified location is leagal.
-		* @param location The specified location to be checked
-		* @param parent Reference to the parent object that serves to a reference to check the location.
-		*/
-        function existLocation (location : Parser.Location,  parent : Parser.Object) : Boolean {
+
+        /**
+         * Checks if the specified location is leagal.
+         * @param location The specified location to be checked
+         * @param parent Reference to the parent object that serves to a reference to check the location.
+         */
+        function pruneObjectsByLocation(location : Parser.Location,  parents : string[]) : string[] {
             //Checks if the locations relation is legit with the locations object in relation to the parent.
-			//If the locations entity is not legit, return false.
-            if(isValidRelation(location.relation,
-                            isEntity(location.entity) ? location.entity.object : null,
-                            parent)){
-               return true;
-           }
-           return false;
+            //If the locations entity is not legit, return false.
+            var legalObjs : string[] = []
+            var children : string[] = getValidObjects(location.entity)
+            children.forEach((c : string) => {
+                parents.forEach((p : string) => {
+                    console.log(p, c, isValidRelation(location.relation, p, c))
+                    if (isValidRelation(location.relation, p, c)) {
+                        legalObjs.push(p)
+                    }
+                })
+            })
+            return legalObjs;
         }
-		
-		/**
-		*Checks the if a relation between two object is true or not. E.g. "The blue ball is beside the table." will return true if the ball is beside the table, otherwise false.
-		* @relation The relation to be checked. E.g. "beside", "leftof", "inside"
-		* @child The first object in e.g inside(x,y)
-		* @parent The second object in e.g inside(x,y)
-		*/
-        function isValidRelation(relation : string, child : Parser.Object, parent : Parser.Object) : Boolean {
-            //First action when finding location should be true since the entity is checked separatly
-            if(!parent) {
-                return true;
 
-            //if there is no child, return false. Illiagal location.
-            } else if (!child) {
-                return false;
-
-            //check if the relation between the parent and the child
-            } else {
-                var c : string[] = findObjectId(child);
-                var p : string[] = findObjectId(parent);
-
-                if(relation == "leftof") {
-					//Save each stack which a corresponging child is in.
-                    var stackNum : number[] = [];
-					
-					//For each child, go through every stack to check if it is there and save it to the variable stackNum.
-                    c.forEach((kid : string) => {
-                        for(var i=0; i<state.stacks.length; i++) {
-                            if(state.stacks[i].indexOf(kid) > -1)
-                                stackNum.push(i);
-                        }
-                    })
-					
-					//For each parent, go through each stack and check if there is a parent object in each of the stacks right of the stacks where the child is, since the "child is left of parent"
-                    p.forEach((par : string) => {
-                        for(var i=0; i<stackNum.length; i++) {
-                            if(state.stacks[stackNum[i]+1].indexOf(par) > -1) {
-                                return true;
-                            }
-                        }
-                    })
-                    return false;
-                } else if(relation == "beside") {
-
-                } else if(relation == "above") {
-
-                } else if(relation == "ontop" || relation == "inside") {
-
-                }
+        /**
+         *Checks the if a relation between two object is true or not. E.g. "The blue ball is beside the table." will return true if the ball is beside the table, otherwise false.
+         * @relation The relation to be checked. E.g. "beside", "leftof", "inside"
+         * @child The first object in e.g inside(x,y)
+         * @parent The second object in e.g inside(x,y)
+         */
+        function isValidRelation(relation : string, parent : string, child : string) : Boolean {
+            switch (relation) {
+                case "beside":
+                    if (getStack(parent) - 1 == getStack(child) ||
+                        getStack(parent) == getStack(child) - 1) {
+                        return true
+                    }
+                    break
+                case "leftof":
+                    if(getStack(parent) == getStack(child) - 1) {
+                        return true
+                    }
+                    break
+                case "above":
+                    var i = getStack(parent)
+                    if (state.stacks[i].indexOf(parent) > state.stacks[i].indexOf(child)) {
+                        return true
+                    }
+                    break
+                case "below":
+                    var i = getStack(parent)
+                    if (state.stacks[i].indexOf(parent) < state.stacks[i].indexOf(child)) {
+                        return true
+                    }
+                    break
+                case "ontop":
+                case "inside":
+                    var i = getStack(parent)
+                    if (state.stacks[i].indexOf(parent) == state.stacks[i].indexOf(child) + 1) {
+                        return true
+                    }
+                    break
+                default:
+                    console.log(relation)
+                    break
             }
-            return false;
+            return false
         }
     }
 }
