@@ -95,18 +95,12 @@ module Interpreter {
     //////////////////////////////////////////////////////////////////////
     // private functions
     /**
-     * The core interpretation function. The code here is just a
-     * template; you should rewrite this function entirely. In this
-     * template, the code produces a dummy interpretation which is not
-     * connected to `cmd`, but your version of the function should
-     * analyse cmd in order to figure out what interpretation to
-     * return.
+     * The core interpretation function. 
      * @param cmd The actual command. Note that it is *not* a string, but rather an object of type `Command` (as it has been parsed by the parser).
      * @param state The current state of the world. Useful to look up objects in the world.
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        // This returns a dummy interpretation involving two random objects in the world
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
@@ -194,6 +188,9 @@ module Interpreter {
             return objects.indexOf(object) > -1;
         }
 
+        /**
+        * Returns the stack that a given object is in.
+        */
         function getStack(object : string) : number {
             var stacks = state.stacks
             for (var i = 0; i < stacks.length; i++) {
@@ -205,7 +202,7 @@ module Interpreter {
         }
 
         /**
-         * Resturns a key to the (first) object that matches the given object.
+         * Returns a key to the (first) object that matches the given object.
          */
         function findObjectIds(object : Parser.Object) : string[] {
             var ids : string[] = []
@@ -247,13 +244,13 @@ module Interpreter {
         }
 
         /**
-         * Checks if the specified location is leagal.
+         * Checks if the specified location is legal.
          * @param location The specified location to be checked
          * @param parent Reference to the parent object that serves to a reference to check the location.
          */
         function pruneObjectsByLocation(location : Parser.Location,  parents : string[]) : string[] {
-            //Checks if the locations relation is legit with the locations object in relation to the parent.
-            //If the locations entity is not legit, return false.
+            // Checks if the locations relation is legit with the locations object in relation to the parent.
+            // If the locations entity is not legit, return false.
             var legalObjs : string[] = []
             var children : string[] = getValidObjects(location.entity)
             children.forEach((c : string) => {
@@ -267,10 +264,10 @@ module Interpreter {
         }
 
         /**
-         *Checks the if a relation between two object is true or not. E.g. "The blue ball is beside the table." will return true if the ball is beside the table, otherwise false.
+         * Checks the if a relation between two object is true or not. E.g. "The blue ball is beside the table." will return true if the ball is beside the table, otherwise false.
          * @relation The relation to be checked. E.g. "beside", "leftof", "inside"
-         * @child The first object in e.g inside(x,y)
          * @parent The second object in e.g inside(x,y)
+         * @child The first object in e.g inside(x,y)
          */
         function isValidRelation(relation : string, parent : string, child : string) : Boolean {
             switch (relation) {
