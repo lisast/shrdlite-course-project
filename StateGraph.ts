@@ -38,6 +38,11 @@ class StateNode {
 
 class StateGraph implements Graph<StateNode> {
 
+    constructor(
+        private objects : ObjectDefinition[]
+    ) {
+    }
+
     outgoingEdges(node : StateNode) : Edge<StateNode>[] {
         var edges : Edge<StateNode>[] = []
         for (var i = 0; i < node.data.length; i++) {
@@ -45,7 +50,7 @@ class StateGraph implements Graph<StateNode> {
                 if (i==j) { continue }
                 var next = node.clone()
                 next.data[j].push(next.data[i].pop())
-                if (isValidState(next)) {
+                if (this.isValidStack(next.data[j])) {
                     edges.push({
                         from: node,
                         to: next,
@@ -60,9 +65,33 @@ class StateGraph implements Graph<StateNode> {
     compareNodes(a : StateNode, b : StateNode) {
         return a.compareTo(b)
     }
-}
 
-function isValidState(state : StateNode) : boolean {
-    // TODO - this should check that physical laws are obeyed
-    return true
+    isValidStack(stack : string[]) : boolean {
+        if (stack.length <= 1) {
+            return true
+        }
+        var a = this.objects[stack[stack.length-1]]
+        var b = this.objects[stack[stack.length-2]]
+
+        // Small objects cannot support large objects
+        var cond1 = a.size == "large" && b.size == "small"
+        // Balls cannot support anything
+        var cond2 = b.form == "ball"
+        // balls can not reside on table
+        var cond3 = a.form == "ball" && b.form == "table"
+        // boxes can't contain pyriamids, planks, boxes of the same size
+        var cond4 = b.form == "box" && b.size == a.size && (
+            a.form == "pyramid" ||
+            a.form == "plank" ||
+            a.form == "box")
+        // small boxes can not be supported by small bricks or pyramids
+        var cond5 = a.form == "box" && a.size == "small" && (
+            b.form == "pyramid" ||
+            (b.form == "brick" && b.size == "small"))
+        // large boxes cant be supported by large pyramids
+        var cond6 = a.form == "box" && a.size == "large" && (
+            b.form == "pyramid" && b.size == "large")
+
+        return !(cond1 || cond2 || cond3 || cond4 || cond5 || cond6)
+    }
 }
