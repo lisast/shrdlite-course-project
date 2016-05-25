@@ -6,7 +6,7 @@
  */
 
 class StateNode {
-    public data
+    public data : string[][]
     constructor(state : WorldState) {
         this.data = state.stacks
     }
@@ -39,7 +39,7 @@ class StateNode {
 class StateGraph implements Graph<StateNode> {
 
     constructor(
-        private objects : ObjectDefinition[]
+        private objects : { [s: string]: ObjectDefinition; }
     ) {
     }
 
