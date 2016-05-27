@@ -79,10 +79,10 @@ module Planner {
         // This function returns a dummy plan involving a random stack
         var graph : StateGraph = new StateGraph(state.objects)
         var startNode : StateNode = new StateNode(state)
-        var h = (n: StateNode) => 0;
+        var isGoal = (n:StateNode) => goalFunction(interpretation, n)
 
-        var isGoal = (n:StateNode) => true
-        // TODO - construct goal function from DNFFormula : (n:Node) => boolean
+        // TODO - come up with good heuristic
+        var h = (n: StateNode) => 0;
 
         var path = aStarSearch(graph, startNode, isGoal, h, 10).path
         var arm : number = state.arm
@@ -93,6 +93,63 @@ module Planner {
         }
 
         return plan;
+
+        function goalFunction(interp : Interpreter.DNFFormula, n : StateNode) : boolean {
+            interp.forEach((conjuction : Interpreter.Literal[]) => {
+                var conjuctionSatisfied : boolean = true
+                conjuction.forEach((lit : Interpreter.Literal) => {
+                    conjuctionSatisfied = conjuctionSatisfied && literalFullfilled(lit, n)
+                })
+                if (conjuctionSatisfied) {
+                    return true
+                }
+            })
+            return false
+        }
+
+        function literalFullfilled(lit : Interpreter.Literal, n : StateNode) : boolean {
+            var a = findObjPos(lit.args[0])
+            var b = findObjPos(lit.args[1])
+            if (a[0] == -1 || a[1] == -1 || b[0] == -1 || b[1] == -1) {
+                return false
+            }
+            var result : boolean = false
+            switch (lit.relation) {
+                case "ontop":
+                    result = a[0] == b[0] && a[1] == b[1]+1
+                    break
+                case "inside":
+                    result = a[0] == b[0] && a[1] == b[1]+1
+                    break
+                case "under":
+                    result = a[0] == b[0] && a[1] < b[1]
+                    break
+                case "above":
+                    result = a[0] == b[0] && a[1] > b[1]
+                    break
+                case "beside":
+                    result = Math.abs(a[0] - b[0]) == 1
+                    break
+                case "leftof":
+                    result = a[0] - b[0] == 1
+                    break
+                case "rightof":
+                    result = a[0] - b[0] == -1
+                    break
+            }
+            return result
+        }
+
+        function findObjPos(obj : string) : [number, number] {
+            var stacks = state.stacks
+            for (var i = 0; i < stacks.length; i++) {
+                var j = stacks[i].indexOf(obj)
+                if (j > -1) {
+                    return [i, j]
+                }
+            }
+            return [-1, -1]
+        }
 
         function planBetweenStates(s1 : StateNode, s2 : StateNode) : string[] {
             var from = s1.data
