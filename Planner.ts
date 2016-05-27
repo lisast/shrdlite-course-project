@@ -99,8 +99,6 @@ module Planner {
         return plan;
 
         function goalFunction(interp : Interpreter.DNFFormula, n : StateNode) : boolean {
-            //console.log("asdf")
-            //console.log(n.data[3])
             var satisfied = false
             interp.forEach((conjuction : Interpreter.Literal[]) => {
                 var conjuctionSatisfied : boolean = true
@@ -172,17 +170,14 @@ module Planner {
                 }
             }
             //Move the arm to the stack the object will move from
-            console.log("arm: ", arm)
             var moveDir = arm < picStack ? "r" : "l"
             var iterations = Math.abs(arm - picStack)
-            console.log(moveDir, iterations, picStack)
             for (var i = 0; i < iterations; i++) {
                 plan.push(moveDir)
                 arm = arm +(moveDir == "r" ? 1 : - 1)
             }
-            console.log(arm)
             //Move the object to the stack it will get to
-            var obj = from[picStack].pop()
+            var obj = from[picStack][from[picStack].length-1]
             plan.push("Picking up the " + state.objects[obj].form, "p");
             moveDir = picStack < putStack ? "r" : "l"
             plan.push("Moving arm " + (moveDir == "r" ? "right" : "left"))
