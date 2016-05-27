@@ -109,18 +109,18 @@ module Planner {
                     putStack = i
                 }
             }
-			//Move the arm to the stack the object will move from
-			var armPosition : number = state.arm
-			var moveDir = armPosition < picStack ? "r" : "l"
+            //Move the arm to the stack the object will move from
+            var armPosition : number = state.arm
+            var moveDir = armPosition < picStack ? "r" : "l"
             for (var i = 0; i < Math.abs(armPosition - picStack); i++) {
                 plan.push(moveDir)
             }
-			
-			//Move the object to the stack it will get to
+        
+            //Move the object to the stack it will get to
             var obj = from[i].pop()
             plan.push("Picking up the " + state.objects[obj].form, "p");
             moveDir = picStack < putStack ? "r" : "l"
-            plan.push("Moving arm " + moveDir)
+            plan.push("Moving arm " + moveDir == "r" ? "right" : "left")
             for (var i = 0; i < Math.abs(picStack - putStack); i++) {
                 plan.push(moveDir)
             }
