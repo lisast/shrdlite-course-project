@@ -81,7 +81,8 @@ module Planner {
         var startNode : StateNode = new StateNode(state)
         var h = (n: StateNode) => 0;
 
-        var isGoal // TODO - construct goal function from DNFFormula
+        var isGoal = (n:StateNode) => true
+        // TODO - construct goal function from DNFFormula : (n:Node) => boolean
 
         var path = aStarSearch(graph, startNode, isGoal, h, 10).path
         var arm : number = state.arm
@@ -94,13 +95,29 @@ module Planner {
         return plan;
 
         function planBetweenStates(s1 : StateNode, s2 : StateNode) : string[] {
-            // TODO - implement this
-            return []
+            var from = s1.data
+            var to = s2.data
+            var picStack = 0
+            var putStack = 0
+
+            for (var i = 0; i < from.length; i++) {
+                if (from[i].length > to[i].length) {
+                    picStack = i
+                }
+                else if (from[i].length < to[i].length) {
+                    putStack = i
+                }
+            }
+            var obj = from[i].pop()
+            plan.push("Picking up the " + state.objects[obj].form, "p");
+            var moveDir = picStack < putStack ? "r" : "l"
+            plan.push("Moving arm " + moveDir)
+            for (var i = 0; i < Math.abs(picStack - putStack); i++) {
+                plan.push(moveDir)
+            }
+            plan.push("Dropping the " + state.objects[obj].form, "d")
+
+            return plan
         }
     }
-
-    // TODO - For reference:
-    //plan.push("Dropping the " + state.objects[obj].form, "d");
-    //plan.push("Picking up the " + state.objects[obj].form, "p");
-
 }
