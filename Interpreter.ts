@@ -117,8 +117,8 @@ module Interpreter {
                 break
             case "put":
                 if(state.holding) {
-                    var id_a = findObjectIds(state.holding)[0]
-                    console.log(id_a)
+                    //var id_a = findObjectIds(state.holding)[0]
+                    var id_a = state.holding
                     var ids_b = getValidObjects(cmd.location.entity)
                     ids_b.forEach((id_b : string) => {
                             var lit : Literal = {
@@ -174,6 +174,7 @@ module Interpreter {
             }
             // Objects are inside boxes, but ontop of other objects
             if ((literal.relation == "inside" && b.form == "box") 
+
                     || (literal.relation == "ontop" && b.form != "box")) {
                 // Small objects cannot support large objects
                 var cond1 = a.size == "large" && b.size == "small"

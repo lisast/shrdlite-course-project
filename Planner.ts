@@ -82,6 +82,9 @@ module Planner {
         var isGoal = (n:StateNode) => goalFunction(interpretation, n)
         var arm : number = state.arm
         var holding : string = state.holding
+        if (holding) {
+            startNode.addHolding(holding)
+        }
         var shouldHold : string
 
         // TODO - come up with good heuristic
@@ -94,11 +97,15 @@ module Planner {
             console.log(s.toString())
         })
 
+        if (holding) {
+            path.shift()
+            planPutDownHolding(path[0])
+        }
         for (var i = 0; i < path.length-1; i++) {
-            plan.concat(planBetweenStates(path[i], path[i+1]))
+            planBetweenStates(path[i], path[i+1])
         }
         if (shouldHold) {
-            plan.concat(pickUpObj(path[path.length-1]))
+            pickUpObj(path[path.length-1])
         }
 
         return plan;
@@ -222,6 +229,21 @@ module Planner {
             //Move the object to the stack it will get to
             var obj = s.data[to][s.data[to].length-1]
             plan.push("Picking up the " + state.objects[obj].form, "p");
+
+            return plan
+        }
+
+        function planPutDownHolding(s : StateNode) : string[] {
+            var to = findObjPos(holding, s)[0]
+            var moveDir = arm < to ? "r" : "l"
+            var iterations = Math.abs(arm - to)
+            for (var i = 0; i < iterations; i++) {
+                plan.push(moveDir)
+                arm = arm +(moveDir == "r" ? 1 : - 1)
+            }
+            //Move the object to the stack it will get to
+            var obj = s.data[to][s.data[to].length-1]
+            plan.push("Dropping the " + state.objects[obj].form, "d")
 
             return plan
         }
