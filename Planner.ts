@@ -99,13 +99,13 @@ module Planner {
 
         if (holding) {
             path.shift()
-            plan.concat(planPutDownHolding(path[0]))
+            planPutDownHolding(path[0])
         }
         for (var i = 0; i < path.length-1; i++) {
-            plan.concat(planBetweenStates(path[i], path[i+1]))
+            planBetweenStates(path[i], path[i+1])
         }
         if (shouldHold) {
-            plan.concat(pickUpObj(path[path.length-1]))
+            pickUpObj(path[path.length-1])
         }
 
         return plan;
