@@ -101,18 +101,33 @@ module Interpreter {
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        var a : string = objects[Math.floor(Math.random() * objects.length)];
-        var b : string = objects[Math.floor(Math.random() * objects.length)];
         var interpretation : DNFFormula = [];
         var ids_a = getValidObjects(cmd.entity)
         switch (cmd.command) {
             case "take":
-                ids_a.forEach((id_a : string) => {
-                    interpretation.push([
-                        {polarity: true, relation: "holding", args: [id_a]}
-                    ])
-                })
+                    ids_a.forEach((id_a : string) => {
+                        if(id_a != "floor") {
+                            interpretation.push([
+                                {polarity: true, relation: "holding", args: [id_a]}
+                            ])
+                        }
+                    })
+
+                break
+            case "put":
+                if(state.holding) {
+                    var ids_b = getValidObjects(cmd.location.entity)
+                    ids_b.forEach((id_b : string) => {
+                            var lit : Literal = {
+                                polarity: true,
+                                relation: cmd.location.relation,
+                                args: [state.holding, id_b]
+                            }
+                            if (obeyesPhysicalLaws(lit)) {
+                                interpretation.push([ lit ])
+                            }
+                    })
+                }
                 break
             case "move":
                 var ids_b = getValidObjects(cmd.location.entity)
@@ -148,10 +163,11 @@ module Interpreter {
             var a = state.objects[literal.args[0]]
             var b = state.objects[literal.args[1]]
             // An object cannot have a relation with itself
-            if (a == b) {
+            if (a == b || a.form == "floor") {
                 return false
             }
-            if (literal.relation == "inside" || literal.relation == "ontop") {
+            if ((literal.relation == "inside" && b.form == "box") 
+                    || (literal.relation == "ontop" && b.form != "box")) {
                 // Small objects cannot support large objects
                 var cond1 = a.size == "large" && b.size == "small"
                 // Balls cannot support anything
@@ -208,6 +224,10 @@ module Interpreter {
          * @param object an object in parsed form
          */
         function findObjectIds(object : Parser.Object) : string[] {
+            // If the object is complex
+            if(object.location) {
+                return findObjectIds(object.object)
+            }
             var ids : string[] = []
             if (object.form == "floor") {
                 ids.push("floor")
@@ -280,6 +300,11 @@ module Interpreter {
                     break
                 case "leftof":
                     if(getStack(parent) == getStack(child) - 1) {
+                        return true
+                    }
+                    break
+                case "rightof":
+                    if(getStack(parent) == getStack(child) + 1) {
                         return true
                     }
                     break
