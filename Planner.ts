@@ -78,29 +78,143 @@ module Planner {
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
         // This function returns a dummy plan involving a random stack
         var graph : StateGraph = new StateGraph(state.objects)
-        var startNode : StateNode = new StateNode(state)
+        var startNode : StateNode = new StateNode(state.stacks)
+        var isGoal = (n:StateNode) => goalFunction(interpretation, n)
+        var arm : number = state.arm
+        var holding : string = state.holding
+        var shouldHold : string
+
+        // TODO - come up with good heuristic
         var h = (n: StateNode) => 0;
 
-        var isGoal // TODO - construct goal function from DNFFormula
-
         var path = aStarSearch(graph, startNode, isGoal, h, 10).path
-        var arm : number = state.arm
         var plan : string[] = [];
 
+        path.forEach((s) => {
+            console.log(s.toString())
+        })
+
         for (var i = 0; i < path.length-1; i++) {
-            plan = plan.concat(planBetweenStates(path[i], path[i+1]))
+            plan.concat(planBetweenStates(path[i], path[i+1]))
         }
+        if (shouldHold) {
+            plan.concat(pickUpObj(path[path.length-1]))
+        }
+        console.log(shouldHold)
 
         return plan;
 
+        function goalFunction(interp : Interpreter.DNFFormula, n : StateNode) : boolean {
+            var satisfied = false
+            interp.forEach((conjuction : Interpreter.Literal[]) => {
+                var conjuctionSatisfied : boolean = true
+                conjuction.forEach((lit : Interpreter.Literal) => {
+                    conjuctionSatisfied = conjuctionSatisfied && literalFullfilled(lit, n)
+                })
+                satisfied = satisfied || conjuctionSatisfied
+            })
+            return satisfied
+        }
+
+        function literalFullfilled(lit : Interpreter.Literal, n : StateNode) : boolean {
+            var a = findObjPos(lit.args[0], n)
+            var b = findObjPos(lit.args[1], n)
+            if (a[0] == -1 || a[1] == -1 || (lit.args[1] && (b[0] == -1 || b[1] == -1))) {
+                return false
+            }
+            var result : boolean = false
+            switch (lit.relation) {
+                case "holding":
+                    result = a[1] == n.data[a[0]].length - 1
+                    shouldHold = lit.args[0]
+                    break
+                case "ontop":
+                    result = a[0] == b[0] && a[1] == b[1]+1
+                    break
+                case "inside":
+                    result = a[0] == b[0] && a[1] == b[1]+1
+                    break
+                case "under":
+                    result = a[0] == b[0] && a[1] < b[1]
+                    break
+                case "above":
+                    result = a[0] == b[0] && a[1] > b[1]
+                    break
+                case "beside":
+                    result = Math.abs(a[0] - b[0]) == 1
+                    break
+                case "leftof":
+                    result = a[0] - b[0] == 1
+                    break
+                case "rightof":
+                    result = a[0] - b[0] == -1
+                    break
+            }
+            return result
+        }
+
+        function findObjPos(obj : string, n : StateNode) : [number, number] {
+            var stacks = n.data
+            for (var i = 0; i < stacks.length; i++) {
+                var j = stacks[i].indexOf(obj)
+                if (j > -1) {
+                    return [i, j]
+                }
+            }
+            return [-1, -1]
+        }
+
         function planBetweenStates(s1 : StateNode, s2 : StateNode) : string[] {
-            // TODO - implement this
-            return []
+            var from = s1.data
+            var to = s2.data
+            var picStack = 0
+            var putStack = 0
+
+            //Get the stacks an object will move from and to
+            for (var i = 0; i < from.length; i++) {
+                if (from[i].length > to[i].length) {
+                    picStack = i
+                }
+                else if (from[i].length < to[i].length) {
+                    putStack = i
+                }
+            }
+            //Move the arm to the stack the object will move from
+            var moveDir = arm < picStack ? "r" : "l"
+            var iterations = Math.abs(arm - picStack)
+            for (var i = 0; i < iterations; i++) {
+                plan.push(moveDir)
+                arm = arm +(moveDir == "r" ? 1 : - 1)
+            }
+            //Move the object to the stack it will get to
+            var obj = from[picStack][from[picStack].length-1]
+            plan.push("Picking up the " + state.objects[obj].form, "p");
+            moveDir = picStack < putStack ? "r" : "l"
+            plan.push("Moving arm " + (moveDir == "r" ? "right" : "left"))
+            var iterations = Math.abs(picStack - putStack)
+            for (var i = 0; i < iterations; i++) {
+                //console.log(moveDir)
+                plan.push(moveDir)
+                arm = arm + (moveDir == "r" ? 1 : -1)
+            }
+            plan.push("Dropping the " + state.objects[obj].form, "d")
+
+            return plan
+        }
+
+        function pickUpObj(s : StateNode) : string[] {
+            var to = findObjPos(shouldHold, s)[0]
+            var moveDir = arm < to ? "r" : "l"
+            var iterations = Math.abs(arm - to)
+            for (var i = 0; i < iterations; i++) {
+                plan.push(moveDir)
+                arm = arm +(moveDir == "r" ? 1 : - 1)
+            }
+            //Move the object to the stack it will get to
+            var obj = s.data[to][s.data[to].length-1]
+            plan.push("Picking up the " + state.objects[obj].form, "p");
+
+            return plan
         }
     }
-
-    // TODO - For reference:
-    //plan.push("Dropping the " + state.objects[obj].form, "d");
-    //plan.push("Picking up the " + state.objects[obj].form, "p");
-
 }

@@ -7,8 +7,8 @@
 
 class StateNode {
     public data : string[][]
-    constructor(state : WorldState) {
-        this.data = state.stacks
+    constructor(stacks : string[][]) {
+        this.data = stacks
     }
 
     compareTo(other : StateNode) {
@@ -16,7 +16,7 @@ class StateNode {
             if (this.data[i].length != other.data[i].length) {
                 return -1
             }
-            for (var j = 0; i < this.data[i].length; j++) {
+            for (var j = 0; j < this.data[i].length; j++) {
                 if (this.data[i][j] != other.data[i][j]) {
                     return -1
                 }
@@ -26,12 +26,28 @@ class StateNode {
     }
 
     clone() {
-        var tmp = new StateNode(null)
-        tmp.data = []
+        var fakeStacks : string[][] = []
+        var tmp = new StateNode(fakeStacks)
         for (var i = 0; i < this.data.length; i++) {
             tmp.data[i] = this.data[i].slice(0)
         }
         return tmp
+    }
+
+    toString() : string {
+        var asdf = ""
+        this.data.forEach((s : string[]) => {
+            s.forEach((r) => {
+                asdf = asdf + r
+            })
+            asdf = asdf + ","
+        })
+        return asdf
+    }
+    log() {
+        this.data.forEach((s) => {
+            console.log(s.toString())
+        })
     }
 }
 
@@ -47,7 +63,7 @@ class StateGraph implements Graph<StateNode> {
         var edges : Edge<StateNode>[] = []
         for (var i = 0; i < node.data.length; i++) {
             for (var j = 0; j < node.data.length; j++) {
-                if (i==j) { continue }
+                if (i==j || !node.data[i].length) { continue }
                 var next = node.clone()
                 next.data[j].push(next.data[i].pop())
                 if (this.isValidStack(next.data[j])) {
@@ -57,6 +73,7 @@ class StateGraph implements Graph<StateNode> {
                         cost: 1
                     })
                 }
+                //console.log(node.toString(), next.toString())
             }
         }
         return edges
