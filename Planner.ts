@@ -80,12 +80,14 @@ module Planner {
         var graph : StateGraph = new StateGraph(state.objects)
         var startNode : StateNode = new StateNode(state.stacks)
         var isGoal = (n:StateNode) => goalFunction(interpretation, n)
+        var arm : number = state.arm
+        var holding : string = state.holding
+        var shouldHold : string
 
         // TODO - come up with good heuristic
         var h = (n: StateNode) => 0;
 
         var path = aStarSearch(graph, startNode, isGoal, h, 10).path
-        var arm : number = state.arm
         var plan : string[] = [];
 
         path.forEach((s) => {
@@ -95,6 +97,10 @@ module Planner {
         for (var i = 0; i < path.length-1; i++) {
             plan.concat(planBetweenStates(path[i], path[i+1]))
         }
+        if (shouldHold) {
+            plan.concat(pickUpObj(path[path.length-1]))
+        }
+        console.log(shouldHold)
 
         return plan;
 
@@ -113,11 +119,15 @@ module Planner {
         function literalFullfilled(lit : Interpreter.Literal, n : StateNode) : boolean {
             var a = findObjPos(lit.args[0], n)
             var b = findObjPos(lit.args[1], n)
-            if (a[0] == -1 || a[1] == -1 || b[0] == -1 || b[1] == -1) {
+            if (a[0] == -1 || a[1] == -1 || (lit.args[1] && (b[0] == -1 || b[1] == -1))) {
                 return false
             }
             var result : boolean = false
             switch (lit.relation) {
+                case "holding":
+                    result = a[1] == n.data[a[0]].length - 1
+                    shouldHold = lit.args[0]
+                    break
                 case "ontop":
                     result = a[0] == b[0] && a[1] == b[1]+1
                     break
@@ -188,6 +198,21 @@ module Planner {
                 arm = arm + (moveDir == "r" ? 1 : -1)
             }
             plan.push("Dropping the " + state.objects[obj].form, "d")
+
+            return plan
+        }
+
+        function pickUpObj(s : StateNode) : string[] {
+            var to = findObjPos(shouldHold, s)[0]
+            var moveDir = arm < to ? "r" : "l"
+            var iterations = Math.abs(arm - to)
+            for (var i = 0; i < iterations; i++) {
+                plan.push(moveDir)
+                arm = arm +(moveDir == "r" ? 1 : - 1)
+            }
+            //Move the object to the stack it will get to
+            var obj = s.data[to][s.data[to].length-1]
+            plan.push("Picking up the " + state.objects[obj].form, "p");
 
             return plan
         }
