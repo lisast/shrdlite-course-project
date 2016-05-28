@@ -117,12 +117,14 @@ module Interpreter {
                 break
             case "put":
                 if(state.holding) {
+                    var id_a = findObjectIds(state.holding)[0]
+                    console.log(id_a)
                     var ids_b = getValidObjects(cmd.location.entity)
                     ids_b.forEach((id_b : string) => {
                             var lit : Literal = {
                                 polarity: true,
                                 relation: cmd.location.relation,
-                                args: [state.holding, id_b]
+                                args: [id_a, id_b]
                             }
                             if (obeyesPhysicalLaws(lit)) {
                                 interpretation.push([ lit ])
@@ -255,7 +257,11 @@ module Interpreter {
          * @param entity The entity to be checked.
          */
         function getValidObjects(entity: Parser.Entity) : string[] {
-            //If the entity has a location object is complex
+            // This will only happen if state.holding has an object
+            if(entity == null) {
+                return []
+            }
+            // If the entity has a location object is complex
             if(entity.object.location) {
                 var objIds = findObjectIds(entity.object.object)
                 return pruneObjectsByLocation(entity.object.location, objIds)
