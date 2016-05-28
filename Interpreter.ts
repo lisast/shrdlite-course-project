@@ -131,6 +131,9 @@ module Interpreter {
                 }
                 break
             case "move":
+                if(state.holding) {
+                    ids_a.push(state.holding)
+                }
                 var ids_b = getValidObjects(cmd.location.entity)
                 ids_a.forEach((id_a : string) => {
                     ids_b.forEach((id_b : string) => {
