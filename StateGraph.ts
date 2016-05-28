@@ -61,11 +61,15 @@ class StateGraph implements Graph<StateNode> {
 
     outgoingEdges(node : StateNode) : Edge<StateNode>[] {
         var edges : Edge<StateNode>[] = []
+        //console.log("1.........")
         if (node.holding) {
+        //console.log("2........")
             for (var i = 0; i < node.data.length; i++) {
+        //console.log("3.........")
                 var next = node.clone()
                 next.data[i].push(node.holding)
-                if (this.isValidStack(next.data[j])) {
+                if (this.isValidStack(next.data[i])) {
+        //console.log("4.........")
                     edges.push({
                         from: node,
                         to: next,
