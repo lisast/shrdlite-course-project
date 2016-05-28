@@ -100,7 +100,6 @@ module Planner {
         if (shouldHold) {
             plan.concat(pickUpObj(path[path.length-1]))
         }
-        console.log(shouldHold)
 
         return plan;
 
@@ -119,7 +118,9 @@ module Planner {
         function literalFullfilled(lit : Interpreter.Literal, n : StateNode) : boolean {
             var a = findObjPos(lit.args[0], n)
             var b = findObjPos(lit.args[1], n)
-            if (a[0] == -1 || a[1] == -1 || (lit.args[1] && (b[0] == -1 || b[1] == -1))) {
+            var isFloor = lit.args[1] == "floor"
+            if (a[0] == -1 || a[1] == -1 || ((lit.args[1] && !isFloor)
+                                             && (b[0] == -1 || b[1] == -1))) {
                 return false
             }
             var result : boolean = false
@@ -129,7 +130,11 @@ module Planner {
                     shouldHold = lit.args[0]
                     break
                 case "ontop":
-                    result = a[0] == b[0] && a[1] == b[1]+1
+                    if (isFloor) {
+                        result = a[1] == 0
+                    } else {
+                        result = a[0] == b[0] && a[1] == b[1]+1
+                    }
                     break
                 case "inside":
                     result = a[0] == b[0] && a[1] == b[1]+1
@@ -138,7 +143,11 @@ module Planner {
                     result = a[0] == b[0] && a[1] < b[1]
                     break
                 case "above":
-                    result = a[0] == b[0] && a[1] > b[1]
+                    if (isFloor) {
+                        result = a[1] >= 0
+                    } else {
+                        result = a[0] == b[0] && a[1] > b[1]
+                    }
                     break
                 case "beside":
                     result = Math.abs(a[0] - b[0]) == 1
