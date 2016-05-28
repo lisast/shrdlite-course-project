@@ -7,8 +7,13 @@
 
 class StateNode {
     public data : string[][]
+    public holding : string
     constructor(stacks : string[][]) {
         this.data = stacks
+    }
+
+    addHolding(obj : string) {
+        this.holding = obj
     }
 
     compareTo(other : StateNode) {
@@ -44,11 +49,6 @@ class StateNode {
         })
         return asdf
     }
-    log() {
-        this.data.forEach((s) => {
-            console.log(s.toString())
-        })
-    }
 }
 
 
@@ -61,11 +61,10 @@ class StateGraph implements Graph<StateNode> {
 
     outgoingEdges(node : StateNode) : Edge<StateNode>[] {
         var edges : Edge<StateNode>[] = []
-        for (var i = 0; i < node.data.length; i++) {
-            for (var j = 0; j < node.data.length; j++) {
-                if (i==j || !node.data[i].length) { continue }
+        if (node.holding) {
+            for (var i = 0; i < node.data.length; i++) {
                 var next = node.clone()
-                next.data[j].push(next.data[i].pop())
+                next.data[i].push(node.holding)
                 if (this.isValidStack(next.data[j])) {
                     edges.push({
                         from: node,
@@ -73,7 +72,21 @@ class StateGraph implements Graph<StateNode> {
                         cost: 1
                     })
                 }
-                //console.log(node.toString(), next.toString())
+            }
+        } else {
+            for (var i = 0; i < node.data.length; i++) {
+                for (var j = 0; j < node.data.length; j++) {
+                    if (i==j || !node.data[i].length) { continue }
+                    var next = node.clone()
+                    next.data[j].push(next.data[i].pop())
+                    if (this.isValidStack(next.data[j])) {
+                        edges.push({
+                            from: node,
+                            to: next,
+                            cost: 1
+                        })
+                    }
+                }
             }
         }
         return edges
