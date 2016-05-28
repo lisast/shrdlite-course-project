@@ -172,6 +172,7 @@ module Interpreter {
             if (a == b || a.form == "floor") {
                 return false
             }
+            // Objects are inside boxes, but ontop of other objects
             if ((literal.relation == "inside" && b.form == "box") 
                     || (literal.relation == "ontop" && b.form != "box")) {
                 // Small objects cannot support large objects
