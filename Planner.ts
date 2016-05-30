@@ -90,7 +90,7 @@ module Planner {
         // TODO - come up with good heuristic
         var h = (n: StateNode) => 0;
 
-        var path = aStarSearch(graph, startNode, isGoal, h, 10).path
+        var path = aStarSearch(graph, startNode, isGoal, h, 60).path
         var plan : string[] = [];
 
         path.forEach((s) => {
@@ -109,6 +109,48 @@ module Planner {
         }
 
         return plan;
+
+        function heuristic(interp : Interpreter.DNFFormula, n : StateNode) : number {
+            var h = Infinity
+            interp.forEach((conjuction : Interpreter.Literal[]) => {
+                var conjuctionHeuristic = 0
+                conjuction.forEach((lit : Interpreter.Literal) => {
+                    conjuctionHeuristic = conjuctionHeuristic + literalHeuristic(lit, n)
+                })
+                h = Math.min(h, conjuctionHeuristic)
+            })
+            return h
+        }
+
+        function literalHeuristic(lit : Interpreter.Literal, n : StateNode) : number {
+            var a = findObjPos(lit.args[0], n)
+            var b = findObjPos(lit.args[1], n)
+            var isFloor = lit.args[1] == "floor"
+            if (a[0] == -1 || a[1] == -1 || ((lit.args[1] && !isFloor)
+                                             && (b[0] == -1 || b[1] == -1))) {
+                return Infinity
+            }
+
+            switch (lit.relation) {
+                case "holding":
+                    break
+                case "ontop":
+                    break
+                case "inside":
+                    break
+                case "under":
+                    break
+                case "above":
+                    break
+                case "beside":
+                    breakput the floor below the red pyramid
+                case "leftof":
+                    break
+                case "rightof":
+                    break
+            }
+            return 0
+        }
 
         function goalFunction(interp : Interpreter.DNFFormula, n : StateNode) : boolean {
             var satisfied = false
@@ -160,10 +202,10 @@ module Planner {
                     result = Math.abs(a[0] - b[0]) == 1
                     break
                 case "leftof":
-                    result = a[0] - b[0] == 1
+                    result = a[0] - b[0] == -1
                     break
                 case "rightof":
-                    result = a[0] - b[0] == -1
+                    result = a[0] - b[0] == 1
                     break
             }
             return result
