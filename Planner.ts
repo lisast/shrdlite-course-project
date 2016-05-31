@@ -123,6 +123,8 @@ module Planner {
         }
 
         function literalHeuristic(lit : Interpreter.Literal, n : StateNode) : number {
+            var hueristic = 0
+
             var a = findObjPos(lit.args[0], n)
             var b = findObjPos(lit.args[1], n)
             var isFloor = lit.args[1] == "floor"
@@ -133,24 +135,73 @@ module Planner {
 
             switch (lit.relation) {
                 case "holding":
+                    hueristic = n.data[a[0]].length - a[1]
                     break
+                    //Objects over the object we want to move + objets over the object we want to move to
                 case "ontop":
-                    break
                 case "inside":
+                    hueristic = n.data[a[0]].length + a[1] +
+                                n.data[b[0]].length + b[1]
                     break
                 case "under":
+                    lit.relation = "above"
+                    var temp = lit.args[0]
+                    lit.args[0] = lit.args[1]
+                    lit.args[1] = temp
+                    hueristic = literalHeuristic(lit, n);
                     break
                 case "above":
+                    hueristic = objecsToMoveInStack(lit.args[0], n.data[b[0]]) + n.data[a[0]].length - a[1]                        
                     break
                 case "beside":
-                    breakput the floor below the red pyramid
+                    hueristic = Math.min(hueristicLeftOf(), hueristicRightOf())
+                    break
                 case "leftof":
+                    //a left of b
+                    hueristic = hueristicLeftOf()
                     break
                 case "rightof":
+                    hueristic = hueristicRightOf()
                     break
             }
-            return 0
+            return hueristic
+
+            function hueristicLeftOf() : number {
+                //Objects over a + objects we have to move left of b
+                var moveA : number = n.data[a[0]].length - a[1] + objecsToMoveInStack(lit.args[0], n.data[b[0] - 1])
+                //Objects over b + objects we have to move left of a
+                var moveB : number = n.data[b[0]].length - b[1] + objecsToMoveInStack(lit.args[1], n.data[a[0] + 1])
+                
+                //return the best value if it is easier to move a or b
+                return Math.min(moveA, moveB)
+            }
+
+             function hueristicRightOf() : number {
+                //Objects over a + objects we have to move left of b
+                var moveA : number = n.data[a[0]].length - a[1] + objecsToMoveInStack(lit.args[0], n.data[b[0] + 1])
+                //Objects over b + objects we have to move left of a
+                var moveB : number = n.data[b[0]].length - b[1] + objecsToMoveInStack(lit.args[1], n.data[a[0] - 1])
+                
+                //return the best value if it is easier to move a or b
+                return Math.min(moveA, moveB)
+            }
+
+            function objecsToMoveInStack(object: string, stack : string[]) : number{
+                var objsToMove :number = 0
+                for(var i = 0; i < stack.length; i++) {
+                    var tempStack = stack //Make a copy(?)
+                    tempStack.push(object) //add object to the stack
+                    if(!graph.isValidStack(tempStack)) {
+                        objsToMove++
+                        stack.pop()
+                    }
+                }
+                return objsToMove
+            }
+
+
         }
+
 
         function goalFunction(interp : Interpreter.DNFFormula, n : StateNode) : boolean {
             var satisfied = false
