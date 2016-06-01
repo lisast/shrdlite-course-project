@@ -88,9 +88,10 @@ module Planner {
         var shouldHold : string
 
         // TODO - come up with good heuristic
-        var h = (n: StateNode) => 0;
+        //var h = (n: StateNode) => 0;
+        var h = (n: StateNode) => heuristic(interpretation, n)
 
-        var path = aStarSearch(graph, startNode, isGoal, h, 60).path
+        var path = aStarSearch(graph, startNode, isGoal, h, 10).path
         var plan : string[] = [];
 
         path.forEach((s) => {
@@ -119,6 +120,7 @@ module Planner {
                 })
                 h = Math.min(h, conjuctionHeuristic)
             })
+            console.log(h, n.toString())
             return h
         }
 
@@ -132,26 +134,26 @@ module Planner {
                                              && (b[0] == -1 || b[1] == -1))) {
                 return Infinity
             }
+            var objsAboveA = n.data[a[0]].length - a[1] - 1
+            var objsAboveB = n.data[b[0]].length - b[1] - 1
 
             switch (lit.relation) {
                 case "holding":
-                    hueristic = n.data[a[0]].length - a[1]
+                    hueristic = objsAboveA
                     break
                     //Objects over the object we want to move + objets over the object we want to move to
                 case "ontop":
                 case "inside":
-                    hueristic = n.data[a[0]].length + a[1] +
-                                n.data[b[0]].length + b[1]
+                    hueristic = objsAboveA + objsAboveB + 1
+                    if (a[0] == b[0] && a[1] == b[1] + 1) {
+                        hueristic = 0;
+                    }
                     break
                 case "under":
-                    lit.relation = "above"
-                    var temp = lit.args[0]
-                    lit.args[0] = lit.args[1]
-                    lit.args[1] = temp
-                    hueristic = literalHeuristic(lit, n);
+                    hueristic = objecsToMoveInStack(lit.args[1], n.data[a[0]]) + objsAboveB
                     break
                 case "above":
-                    hueristic = objecsToMoveInStack(lit.args[0], n.data[b[0]]) + n.data[a[0]].length - a[1]                        
+                    hueristic = objecsToMoveInStack(lit.args[0], n.data[b[0]]) + objsAboveA
                     break
                 case "beside":
                     hueristic = Math.min(hueristicLeftOf(), hueristicRightOf())
@@ -168,32 +170,48 @@ module Planner {
 
             function hueristicLeftOf() : number {
                 //Objects over a + objects we have to move left of b
-                var moveA : number = n.data[a[0]].length - a[1] + objecsToMoveInStack(lit.args[0], n.data[b[0] - 1])
+                var moveA = Infinity
+                var moveB = Infinity
+                if (b[0] - 1 >= 0) {
+                    moveA = objsAboveA + objecsToMoveInStack(lit.args[0], n.data[b[0] - 1])
+                }
                 //Objects over b + objects we have to move left of a
-                var moveB : number = n.data[b[0]].length - b[1] + objecsToMoveInStack(lit.args[1], n.data[a[0] + 1])
-                
+                if (a[0] + 1 <= n.data.length) {
+                    moveB = objsAboveB + objecsToMoveInStack(lit.args[1], n.data[a[0] + 1])
+                }
+
                 //return the best value if it is easier to move a or b
                 return Math.min(moveA, moveB)
             }
 
              function hueristicRightOf() : number {
+                var moveA = Infinity
+                var moveB = Infinity
                 //Objects over a + objects we have to move left of b
-                var moveA : number = n.data[a[0]].length - a[1] + objecsToMoveInStack(lit.args[0], n.data[b[0] + 1])
+                if (b[0] + 1 <= n.data.length) {
+                    moveA = objsAboveA + objecsToMoveInStack(lit.args[0], n.data[b[0] + 1])
+                }
                 //Objects over b + objects we have to move left of a
-                var moveB : number = n.data[b[0]].length - b[1] + objecsToMoveInStack(lit.args[1], n.data[a[0] - 1])
-                
+                if (a[0] - 1 >= 0) {
+                    moveB = objsAboveB + objecsToMoveInStack(lit.args[1], n.data[a[0] - 1])
+                }
+
                 //return the best value if it is easier to move a or b
                 return Math.min(moveA, moveB)
             }
 
             function objecsToMoveInStack(object: string, stack : string[]) : number{
                 var objsToMove :number = 0
+                //if (stack.length == 0) { return 0}
+                var tempStack = stack.slice(0) //Make a copy
                 for(var i = 0; i < stack.length; i++) {
-                    var tempStack = stack //Make a copy(?)
                     tempStack.push(object) //add object to the stack
                     if(!graph.isValidStack(tempStack)) {
                         objsToMove++
-                        stack.pop()
+                        tempStack.pop()
+                        tempStack.pop()
+                    } else {
+                        break
                     }
                 }
                 return objsToMove

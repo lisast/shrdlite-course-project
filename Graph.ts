@@ -100,6 +100,7 @@ function aStarSearch<Node> (
             cameFrom.setValue(neighbour, currentNode);
             cost.setValue(neighbour, tentativeCost);
             fScore.setValue(neighbour, tentativeCost + heuristics(neighbour));
+            console.log(fScore.getValue(neighbour))
         }
     }
     return;
