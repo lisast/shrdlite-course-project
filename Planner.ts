@@ -129,8 +129,10 @@ module Planner {
 
             var a = findObjPos(lit.args[0], n)
             var b = findObjPos(lit.args[1], n)
-            var isFloor = lit.args[1] == "floor"
-            if (a[0] == -1 || a[1] == -1 || ((lit.args[1] && !isFloor)
+            var aObj = lit.args[0]
+            var bObj = lit.args[1]
+            var isFloor = bObj == "floor"
+            if (a[0] == -1 || a[1] == -1 || ((bObj && !isFloor)
                                              && (b[0] == -1 || b[1] == -1))) {
                 return Infinity
             }
@@ -150,54 +152,42 @@ module Planner {
                     }
                     break
                 case "under":
-                    hueristic = objecsToMoveInStack(lit.args[1], n.data[a[0]]) + objsAboveB
+                    hueristic = objecsToMoveInStack(bObj, n.data[a[0]]) + objsAboveB
                     break
                 case "above":
-                    hueristic = objecsToMoveInStack(lit.args[0], n.data[b[0]]) + objsAboveA
+                    hueristic = objecsToMoveInStack(aObj, n.data[b[0]]) + objsAboveA
                     break
                 case "beside":
-                    hueristic = Math.min(hueristicLeftOf(), hueristicRightOf())
+                    hueristic = Math.min(hueristicLeftOf(aObj, bObj, a[0], b[0]),
+                                        hueristicRightOf(aObj, bObj, a[0], b[0]))
                     break
                 case "leftof":
                     //a left of b
-                    hueristic = hueristicLeftOf()
+                    hueristic = hueristicLeftOf(aObj, bObj, a[0], b[0])
                     break
                 case "rightof":
-                    hueristic = hueristicRightOf()
+                    hueristic = hueristicRightOf(aObj, bObj, a[0], b[0])
                     break
             }
             return hueristic
 
-            function hueristicLeftOf() : number {
+            function hueristicLeftOf(o1, o2, stack1, stack2) : number {
                 //Objects over a + objects we have to move left of b
                 var moveA = Infinity
                 var moveB = Infinity
                 if (b[0] - 1 >= 0) {
-                    moveA = objsAboveA + objecsToMoveInStack(lit.args[0], n.data[b[0] - 1])
+                    moveA = objsAboveA + objecsToMoveInStack(o1, n.data[stack2 - 1])
                 }
                 //Objects over b + objects we have to move left of a
                 if (a[0] + 1 <= n.data.length) {
-                    moveB = objsAboveB + objecsToMoveInStack(lit.args[1], n.data[a[0] + 1])
+                    moveB = objsAboveB + objecsToMoveInStack(o2, n.data[stack1 + 1])
                 }
-
                 //return the best value if it is easier to move a or b
                 return Math.min(moveA, moveB)
             }
 
-             function hueristicRightOf() : number {
-                var moveA = Infinity
-                var moveB = Infinity
-                //Objects over a + objects we have to move left of b
-                if (b[0] + 1 <= n.data.length) {
-                    moveA = objsAboveA + objecsToMoveInStack(lit.args[0], n.data[b[0] + 1])
-                }
-                //Objects over b + objects we have to move left of a
-                if (a[0] - 1 >= 0) {
-                    moveB = objsAboveB + objecsToMoveInStack(lit.args[1], n.data[a[0] - 1])
-                }
-
-                //return the best value if it is easier to move a or b
-                return Math.min(moveA, moveB)
+            function hueristicRightOf(o1, o2, stack1, stack2) : number {
+                return hueristicLeftOf(o2, o1, stack2, stack1)
             }
 
             function objecsToMoveInStack(object: string, stack : string[]) : number{
