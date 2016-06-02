@@ -80,6 +80,7 @@ module Planner {
         var graph : StateGraph = new StateGraph(state.objects)
         var startNode : StateNode = new StateNode(state.stacks)
         var isGoal = (n:StateNode) => goalFunction(interpretation, n)
+        console.log(isGoal, JSON.stringify(interpretation,null,2))
         var arm : number = state.arm
         var holding : string = state.holding
         if (holding) {
@@ -126,7 +127,10 @@ module Planner {
 
         function literalHeuristic(lit : Interpreter.Literal, n : StateNode) : number {
             var hueristic = 0
-
+            if(lit.relation == "holding") {
+                var a = findObjPos(lit.args[0], n) 
+                return n.data[a[0]].length - a[1] - 1               
+            }
             var a = findObjPos(lit.args[0], n)
             var b = findObjPos(lit.args[1], n)
             var aObj = lit.args[0]
@@ -153,13 +157,20 @@ module Planner {
                     break
                 case "under":
                     hueristic = objecsToMoveInStack(bObj, n.data[a[0]]) + objsAboveB
+                    if(a[0] == b[0]) {
+                        hueristic--
+                    }
                     break
                 case "above":
                     hueristic = objecsToMoveInStack(aObj, n.data[b[0]]) + objsAboveA
+                    if(a[0] == b[0]) {
+                        hueristic--
+                    }
                     break
                 case "beside":
-                    hueristic = Math.min(hueristicLeftOf(aObj, bObj, a[0], b[0]),
-                                        hueristicRightOf(aObj, bObj, a[0], b[0]))
+                    var left  = hueristicLeftOf(aObj, bObj, a[0], b[0])
+                    var right = hueristicRightOf(aObj, bObj, a[0], b[0])
+                    hueristic = Math.min(left,right)
                     break
                 case "leftof":
                     //a left of b
@@ -171,28 +182,35 @@ module Planner {
             }
             return hueristic
 
-            function hueristicLeftOf(o1, o2, stack1, stack2) : number {
+            function hueristicLeftOf(o1: string, o2: string, stackNbr1 : number, stackNbr2 : number) : number {
                 //Objects over a + objects we have to move left of b
                 var moveA = Infinity
-                var moveB = Infinity
-                if (b[0] - 1 >= 0) {
-                    moveA = objsAboveA + objecsToMoveInStack(o1, n.data[stack2 - 1])
+                var moveB = Infinity   
+                if(stackNbr1 == stackNbr2 - 1) {
+                    moveA = 0
+                }
+                else if(stackNbr2 == stackNbr1 + 1) {
+                    moveB = 0
+                }
+                else if (stackNbr2 - 1 >= 0) {   
+                    moveA = objsAboveA + objecsToMoveInStack(o1, n.data[stackNbr2 - 1])
                 }
                 //Objects over b + objects we have to move left of a
-                if (a[0] + 1 <= n.data.length) {
-                    moveB = objsAboveB + objecsToMoveInStack(o2, n.data[stack1 + 1])
+                else if (stackNbr1 + 1 < n.data.length) {    
+                    moveB = objsAboveB + objecsToMoveInStack(o2, n.data[stackNbr1 + 1])
                 }
+
                 //return the best value if it is easier to move a or b
                 return Math.min(moveA, moveB)
             }
 
-            function hueristicRightOf(o1, o2, stack1, stack2) : number {
-                return hueristicLeftOf(o2, o1, stack2, stack1)
+            function hueristicRightOf(o1: string, o2: string, stackNbr1 : number, stackNbr2 : number) : number {
+                return hueristicLeftOf(o2, o1, stackNbr2, stackNbr1)
             }
 
             function objecsToMoveInStack(object: string, stack : string[]) : number{
-                var objsToMove :number = 0
-                //if (stack.length == 0) { return 0}
+                var objsToMove : number = 1
+                //if (!stack) { return 0}
                 var tempStack = stack.slice(0) //Make a copy
                 for(var i = 0; i < stack.length; i++) {
                     tempStack.push(object) //add object to the stack
