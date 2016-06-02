@@ -104,6 +104,7 @@ module Interpreter {
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
         var interpretation : DNFFormula = [];
         var ids_a = getValidObjects(cmd.entity)
+        console.log(cmd)
         switch (cmd.command) {
             case "take":
                     ids_a.forEach((id_a : string) => {
@@ -133,7 +134,8 @@ module Interpreter {
                 }
                 break
             case "move":
-                if(state.holding) {
+                var tmp = findObjectIds(cmd.entity.object)
+                if(tmp.indexOf(state.holding) != -1) {
                     ids_a.push(state.holding)
                 }
                 var ids_b = getValidObjects(cmd.location.entity)
@@ -173,7 +175,7 @@ module Interpreter {
                 return false
             }
             // Objects are inside boxes, but ontop of other objects
-            if ((literal.relation == "inside" && b.form == "box") 
+            if ((literal.relation == "inside" && b.form == "box")
 
                     || (literal.relation == "ontop" && b.form != "box")) {
                 // Small objects cannot support large objects

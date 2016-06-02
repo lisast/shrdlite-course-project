@@ -80,7 +80,6 @@ module Planner {
         var graph : StateGraph = new StateGraph(state.objects)
         var startNode : StateNode = new StateNode(state.stacks)
         var isGoal = (n:StateNode) => goalFunction(interpretation, n)
-        console.log(isGoal, JSON.stringify(interpretation,null,2))
         var arm : number = state.arm
         var holding : string = state.holding
         if (holding) {
@@ -94,10 +93,6 @@ module Planner {
 
         var path = aStarSearch(graph, startNode, isGoal, h, 10).path
         var plan : string[] = [];
-
-        path.forEach((s) => {
-            console.log(s.toString())
-        })
 
         if (holding) {
             path.shift()
@@ -113,7 +108,7 @@ module Planner {
         return plan;
 
         function heuristic(interp : Interpreter.DNFFormula, n : StateNode) : number {
-            var h = Infinity
+            var h = 15
             interp.forEach((conjuction : Interpreter.Literal[]) => {
                 var conjuctionHeuristic = 0
                 conjuction.forEach((lit : Interpreter.Literal) => {
@@ -121,17 +116,15 @@ module Planner {
                 })
                 h = Math.min(h, conjuctionHeuristic)
             })
-            console.log(h, n.toString())
             return h
         }
 
         function literalHeuristic(lit : Interpreter.Literal, n : StateNode) : number {
             var hueristic = 0
-            if(lit.relation == "holding") {
-                var a = findObjPos(lit.args[0], n) 
-                return n.data[a[0]].length - a[1] - 1               
-            }
             var a = findObjPos(lit.args[0], n)
+            if(lit.relation == "holding") {
+                return n.data[a[0]].length - a[1] - 1
+            }
             var b = findObjPos(lit.args[1], n)
             var aObj = lit.args[0]
             var bObj = lit.args[1]
@@ -141,7 +134,12 @@ module Planner {
                 return Infinity
             }
             var objsAboveA = n.data[a[0]].length - a[1] - 1
-            var objsAboveB = n.data[b[0]].length - b[1] - 1
+            var objsAboveB : number
+            if (isFloor) {
+                objsAboveB = Math.min(...n.data.map((stack : string[]) => stack.length))
+            } else {
+                objsAboveB = n.data[b[0]].length - b[1] - 1
+            }
 
             switch (lit.relation) {
                 case "holding":
@@ -185,18 +183,18 @@ module Planner {
             function hueristicLeftOf(o1: string, o2: string, stackNbr1 : number, stackNbr2 : number) : number {
                 //Objects over a + objects we have to move left of b
                 var moveA = Infinity
-                var moveB = Infinity   
+                var moveB = Infinity
                 if(stackNbr1 == stackNbr2 - 1) {
                     moveA = 0
                 }
                 else if(stackNbr2 == stackNbr1 + 1) {
                     moveB = 0
                 }
-                else if (stackNbr2 - 1 >= 0) {   
+                else if (stackNbr2 - 1 >= 0) {
                     moveA = objsAboveA + objecsToMoveInStack(o1, n.data[stackNbr2 - 1])
                 }
                 //Objects over b + objects we have to move left of a
-                else if (stackNbr1 + 1 < n.data.length) {    
+                else if (stackNbr1 + 1 < n.data.length) {
                     moveB = objsAboveB + objecsToMoveInStack(o2, n.data[stackNbr1 + 1])
                 }
 
@@ -328,7 +326,6 @@ module Planner {
             plan.push("Moving arm " + (moveDir == "r" ? "right" : "left"))
             var iterations = Math.abs(picStack - putStack)
             for (var i = 0; i < iterations; i++) {
-                //console.log(moveDir)
                 plan.push(moveDir)
                 arm = arm + (moveDir == "r" ? 1 : -1)
             }
