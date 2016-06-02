@@ -1,0 +1,11 @@
+Our implementation of shrdlite optimizes the most efficient move between states. This means that the movement of the arm is not taken into consideration. Our reason for this is that moving the arm is cheep and picking up objects has a large cost. Other than that our implementation is fairly vanilla.
+
+# StateGraph.ts
+This file contains two classes. StateNode represents a state of the stacks in the world, and can also take into consideration if the arm is holding something in the beginning of the optimization. StateGraph is a implementation of the Graph interface. It can simply take a StateNode and return all connected nodes.
+
+# Planner.ts
+Most of the code in the planner is for the heuristic function and the goal function. Both are fairly similar in structure since both takes the interpretation as an argument and then yields a result depending on the interpretation. They both simply loop through the conjunctions and the literals to find either a heuristic or if the current state is a goal.
+When the optimal path is found it is a list of states between the start and goal node. To construct a plan we have a function called planBetweenStates which takes two states as parameters and creates a plan for how the arm should move. This is done between all states in the list.
+
+# Interpreter.ts
+The interpreter was extended so that it could know if the arm is holding an object in the current state.
